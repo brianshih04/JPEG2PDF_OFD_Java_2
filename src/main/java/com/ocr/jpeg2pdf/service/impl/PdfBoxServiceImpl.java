@@ -5,6 +5,7 @@ import com.ocr.jpeg2pdf.model.OcrResult;
 import com.ocr.jpeg2pdf.service.PdfService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -95,6 +96,13 @@ public class PdfBoxServiceImpl implements PdfService {
                 
                 log.info("第 {} 頁處理完成", i + 1);
             }
+            
+            // 添加 PDF 元数据
+            PDDocumentInformation info = document.getDocumentInformation();
+            info.setTitle("OCR Searchable Document");
+            info.setCreator("JPEG2PDF_OFD_Java_2 (PaddleOCR & PDFBox)");
+            info.setSubject("Searchable PDF generated from OCR");
+            info.setKeywords("OCR, Searchable, PDF");
             
             // 儲存 PDF
             document.save(outputPath.toFile());
