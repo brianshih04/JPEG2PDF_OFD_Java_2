@@ -99,6 +99,45 @@ public class OfdPostProcessServiceImpl implements OfdPostProcessService {
         Files.writeString(contentPath, modifiedContent, StandardCharsets.UTF_8);
         
         log.debug("页面 {} 处理完成", pageIndex + 1);
+        
+        // 更新 DocumentRes.xml 添加字体定义
+        updateDocumentRes(tempDir);
+    }
+    
+    /**
+     * 更新 DocumentRes.xml 添加字体定义
+     */
+    private void updateDocumentRes(Path tempDir) throws IOException {
+        Path docResPath = tempDir.resolve("Doc_0/DocumentRes.xml");
+        if (!Files.exists(docResPath)) {
+            log.warn("DocumentRes.xml 不存在: {}", docResPath);
+            return;
+        }
+        
+        String docRes = Files.readString(docResPath, StandardCharsets.UTF_8);
+        
+        // 检查是否已经有 Fonts 定义
+        if (docRes.contains("<ofd:Fonts>")) {
+            log.debug("DocumentRes.xml 已有字体定义");
+            return;
+        }
+        
+        // 添加字体定义（在 <ofd:Res> 标签后）
+        String fontDef = "<ofd:Fonts><ofd:Font ID=\"1\" FontName=\"SimHei\" FamilyName=\"SimHei\"/></ofd:Fonts>";
+        
+        // 在 <ofd:Res> 后插入字体定义
+        int insertPos = docRes.indexOf("<ofd:Res");
+        if (insertPos > 0) {
+            // 找到第一个 > 之后
+            int endTagPos = docRes.indexOf(">", insertPos);
+            if (endTagPos > 0) {
+                docRes = docRes.substring(0, endTagPos + 1) + fontDef + docRes.substring(endTagPos + 1);
+                
+                // 写回文件
+                Files.writeString(docResPath, docRes, StandardCharsets.UTF_8);
+                log.info("已添加字体定义到 DocumentRes.xml");
+            }
+        }
     }
     
     /**
