@@ -1,0 +1,123 @@
+/* 自定義樣式 */
+
+/* 拖放區域 */
+#drop-zone {
+    transition: all 0.3s ease;
+}
+
+#drop-zone.dragover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+/* 檔案列表 */
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #f3f4f6;
+}
+
+.file-item .file-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.file-item .file-size {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.file-item .remove-btn {
+    color: #ef4444;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.file-item .remove-btn:hover {
+    background-color: #fee2e2;
+}
+
+/* Toast 通知 */
+#toast {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 載入中動畫 */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* 結果區域淡入 */
+#result-section {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 按鈕樣式 */
+button {
+    transition: all 0.2s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 列印樣式 */
+@media print {
+    nav, footer, button, #loading-overlay, #toast {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+    }
+}

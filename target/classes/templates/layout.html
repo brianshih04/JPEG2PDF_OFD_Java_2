@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">JPEG2PDF_OFD_Java</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 自定義樣式 -->
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    
+    <!-- favicon -->
+    <link rel="icon" type="image/png" th:href="@{/favicon.png}">
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <!-- 導航欄 -->
+    <nav th:fragment="navbar" class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a th:href="@{/}" class="text-xl font-bold flex items-center">
+                        <span class="text-2xl mr-2">🐉</span>
+                        JPEG2PDF_OFD_Java
+                    </a>
+                </div>
+                <div class="flex space-x-4">
+                    <a th:href="@{/}" class="hover:bg-blue-700 px-3 py-2 rounded">首頁</a>
+                    <a th:href="@{/settings}" class="hover:bg-blue-700 px-3 py-2 rounded">設定</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主內容區 -->
+    <main class="container mx-auto px-4 py-8">
+        <div th:replace="${content}">
+            <!-- 頁面內容會在這裡替換 -->
+        </div>
+    </main>
+
+    <!-- 頁腳 -->
+    <footer th:fragment="footer" class="bg-gray-800 text-white py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">
+                JPEG2PDF_OFD_Java v1.0.0 | 
+                <span>圖片 OCR 轉換工具</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast 通知 -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+        <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
+            <span id="toast-message"></span>
+            <button onclick="hideToast()" class="ml-4 text-white hover:text-gray-200">✕</button>
+        </div>
+    </div>
+
+    <!-- 載入中遮罩 -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+            <p id="loading-message" class="text-gray-700">處理中...</p>
+        </div>
+    </div>
+
+    <!-- 公共 JS -->
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>
