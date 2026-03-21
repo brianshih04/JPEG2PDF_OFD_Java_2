@@ -119,18 +119,13 @@ public class OfdPostProcessServiceImpl implements OfdPostProcessService {
             float height = (float) tp.getHeight() * 25.4f / 72.0f;
             float fontSize = (float) tp.getFontSize() * 25.4f / 72.0f;
             
-            // 生成 TextObject (透明文字 - 使用 GraphicUnit/FillParam/ColorValue)
+            // 生成 TextObject (不可见文字层 - 使用 Visible="false")
             String text = escapeXml(tp.getText());
+            // 使用 Visible="false" 实现不可见但可搜索的文字层（OFD 标准推荐方式）
             textLayer.append(String.format(
-                "  <ofd:TextObject ID=\"%d\" Font=\"1\" Size=\"%.1f\" Boundary=\"%.1f %.1f %.1f %.1f\">\n",
+                "  <ofd:TextObject ID=\"%d\" Font=\"1\" Size=\"%.1f\" Boundary=\"%.1f %.1f %.1f %.1f\" Visible=\"false\">\n",
                 objectId++, fontSize, x, y, width, height
             ));
-            // 使用 GraphicUnit > FillParam > ColorValue 结构设置透明度
-            textLayer.append("    <ofd:GraphicUnit>\n");
-            textLayer.append("      <ofd:FillParam>\n");
-            textLayer.append("        <ofd:ColorValue Red=\"0\" Green=\"0\" Blue=\"0\" Alpha=\"0\"/>\n");
-            textLayer.append("      </ofd:FillParam>\n");
-            textLayer.append("    </ofd:GraphicUnit>\n");
             textLayer.append(String.format(
                 "    <ofd:TextCode X=\"%.1f\" Y=\"%.1f\">%s</ofd:TextCode>\n",
                 x, y, text
