@@ -86,9 +86,12 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double x = tp.getX() * 25.4 / 72.0;
                         double fontSize = tp.getFontSize() * 25.4 / 72.0;
                         
-                        // Y 轴转换（OFD 和 PDF 坐标系统相同）
-                        // 使用和 PDF 相同的公式
-                        double y = heightMm - (tp.getY() + tp.getHeight() * 0.8) * 25.4 / 72.0;
+                        // Y 轴转换
+                        // OFD 使用 Y-down 坐标系统（原点在左上角）
+                        // OCR 也是 Y-down 坐标系统
+                        // 所以直接转换，不需要翻转
+                        // 但是需要调整基线：baseline = y + height * 0.8
+                        double y = (tp.getY() + tp.getHeight() * 0.8) * 25.4 / 72.0;
                         
                         // 创建文字片段
                         Span span = new Span(tp.getText());
