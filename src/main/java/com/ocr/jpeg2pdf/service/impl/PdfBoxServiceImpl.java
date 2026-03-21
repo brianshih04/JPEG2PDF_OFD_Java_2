@@ -201,6 +201,98 @@ public class PdfBoxServiceImpl implements PdfService {
     }
     
     @Override
+    public Path generateSearchablePdfForOfd(List<BufferedImage> images, List<OcrResult> ocrResults, Path outputPath) throws Exception {
+        log.info("生成 PDF (可见文字，用于 OFD 转换): {}", outputPath);
+        
+        try (PDDocument document = new PDDocument()) {
+            for (int i = 0; i < images.size(); i++) {
+                BufferedImage image = images.get(i);
+                OcrResult ocrResult = i < ocrResults.size() ? ocrResults.get(i) : null;
+                
+                // 创建页面（使用图片尺寸）
+                float width = image.getWidth();
+                float height = image.getHeight();
+                PDRectangle pageSize = new PDRectangle(width, height);
+                PDPage page = new PDPage(pageSize);
+                document.addPage(page);
+                
+                // 载入字体
+                PDFont font = loadFont(document);
+                
+                // 绘制内容
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                    // 1. 绘制图片
+                    PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, imageToBytes(image), "image");
+                    contentStream.drawImage(pdImage, 0, 0, width, height);
+                    
+                    // 2. 插入可见文字层（用于 OFD）
+                    if (ocrResult != null && ocrResult.getTextPositions() != null) {
+                        log.info("開始繪製 {} 個可見文字", ocrResult.getTextPositions().size());
+                        int textCount = 0;
+                        for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
+                            drawVisibleText(contentStream, tp, page, font, height);
+                            textCount++;
+                        }
+                        log.info("第 {} 頁繪製了 {} 個可見文字", i + 1, textCount);
+                    } else {
+                        log.warn("第 {} 頁沒有 OCR 結果或文字位置資訊", i + 1);
+                    }
+                }
+                
+                log.info("第 {} 頁處理完成", i + 1);
+            }
+            
+            // 儲存 PDF
+            document.save(outputPath.toFile());
+            log.info("PDF 已儲存: {} ({} 頁)", outputPath, images.size());
+            return outputPath;
+        }
+    }
+    
+    /**
+     * 繪製可見文字（用於 OFD 轉換）
+     */
+    private void drawVisibleText(
+        PDPageContentStream contentStream, 
+        OcrResult.TextPosition tp, 
+        PDPage page,
+        PDFont font,
+        float pageHeight
+    ) throws IOException {
+        
+        // 計算 PDF 座標
+        float pdfX = (float) tp.getX();
+        float pdfY = pageHeight - (float) (tp.getY() + tp.getHeight());
+        float fontSize = (float) tp.getFontSize();
+        
+        // 如果字體大小無效，使用預設值
+        if (fontSize <= 0) {
+            fontSize = 24.0f;
+            log.warn("字體大小無效（{}），使用預設值: {}", tp.getFontSize(), fontSize);
+        }
+        
+        if (font == null) {
+            log.debug("跳過文字（無字體）: {}", tp.getText());
+            return;
+        }
+        
+        log.debug("繪製可見文字: '{}' at ({}, {}), 字體大小: {}", tp.getText(), pdfX, pdfY, fontSize);
+        
+        try {
+            // 使用渲染模式 0 (FILL) - 可見文字
+            contentStream.beginText();
+            contentStream.setFont(font, fontSize);
+            contentStream.setRenderingMode(RenderingMode.FILL);  // 可見文字
+            contentStream.newLineAtOffset(pdfX, pdfY);
+            contentStream.showText(tp.getText());
+            contentStream.endText();
+            
+        } catch (Exception e) {
+            log.warn("繪製文字失敗: {} - {}", tp.getText(), e.getMessage());
+        }
+    }
+    
+    @Override
     public Path mergePdfs(List<Path> pdfPaths, Path outputPath) throws Exception {
         log.info("合併 {} 個 PDF 到 {}", pdfPaths.size(), outputPath);
         

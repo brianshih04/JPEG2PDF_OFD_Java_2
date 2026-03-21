@@ -11,7 +11,7 @@ import java.util.List;
 public interface PdfService {
     
     /**
-     * 生成 Searchable PDF
+     * 生成 Searchable PDF（透明文字層，用於直接 PDF 導出）
      * 
      * @param images 圖片列表
      * @param ocrResults OCR 結果列表
@@ -19,6 +19,16 @@ public interface PdfService {
      * @return 輸出檔案路徑
      */
     Path generateSearchablePdf(List<BufferedImage> images, List<OcrResult> ocrResults, Path outputPath) throws Exception;
+    
+    /**
+     * 生成 PDF（可見文字層，用於 OFD 轉換）
+     * 
+     * @param images 圖片列表
+     * @param ocrResults OCR 結果列表
+     * @param outputPath 輸出路徑
+     * @return 輸出檔案路徑
+     */
+    Path generateSearchablePdfForOfd(List<BufferedImage> images, List<OcrResult> ocrResults, Path outputPath) throws Exception;
     
     /**
      * 合併多個 PDF

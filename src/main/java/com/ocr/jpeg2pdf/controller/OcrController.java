@@ -228,9 +228,11 @@ public class OcrController {
                     pdfService.generateSearchablePdf(images, ocrResults, outputPath);
                     break;
                 case "searchable_ofd":
-                    // 先生成 PDF，再轉換為 OFD
+                    // 先生成 PDF（可見文字），再轉換為 OFD
                     Path tempPdf = outputDir.resolve("temp_" + timestamp + ".pdf");
-                    pdfService.generateSearchablePdf(images, ocrResults, tempPdf);
+                    
+                    // 使用可見文字的 PDF（用於 OFD 轉換）
+                    pdfService.generateSearchablePdfForOfd(images, ocrResults, tempPdf);
                     
                     // 使用 ofdrw-converter 將 PDF 轉換為 OFD
                     if (ofdService instanceof OfdrwServiceImpl) {

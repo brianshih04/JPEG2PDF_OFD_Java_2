@@ -54,6 +54,13 @@
             <artifactId>ofdrw-converter</artifactId>
             <version>${ofdrw.version}</version>
         </dependency>
+        
+        <!-- OFD Layout (for direct OFD generation) -->
+        <dependency>
+            <groupId>org.ofdrw</groupId>
+            <artifactId>ofdrw-layout</artifactId>
+            <version>${ofdrw.version}</version>
+        </dependency>
 
         <!-- RapidOcr-Java -->
         <dependency>
