@@ -102,12 +102,10 @@ public class OfdPostProcessServiceImpl implements OfdPostProcessService {
     }
     
     /**
-     * 在 Content.xml 中添加文字层
+     * 在 Content.xml 中添加文字层（添加到现有 Layer 中）
      */
     private String addTextLayer(String content, OcrResult ocrResult) {
         StringBuilder textLayer = new StringBuilder();
-        
-        textLayer.append("<ofd:Layer Type=\"Foreground\" ID=\"100\">\n");
         
         int objectId = 1000;
         for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
@@ -133,10 +131,8 @@ public class OfdPostProcessServiceImpl implements OfdPostProcessService {
             textLayer.append("  </ofd:TextObject>\n");
         }
         
-        textLayer.append("</ofd:Layer>\n");
-        
-        // 在 </ofd:Content> 之前插入文字层
-        int insertPos = content.indexOf("</ofd:Content>");
+        // 在 </ofd:Layer> 之前插入文字层（添加到现有 Layer 中）
+        int insertPos = content.indexOf("</ofd:Layer>");
         if (insertPos > 0) {
             content = content.substring(0, insertPos) + textLayer.toString() + content.substring(insertPos);
         }
