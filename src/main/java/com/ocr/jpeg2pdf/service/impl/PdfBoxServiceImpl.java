@@ -140,10 +140,10 @@ public class PdfBoxServiceImpl implements PdfService {
     ) throws IOException {
         
         // 計算 PDF 座標
-        // 圖片 Y + 高度 = 文字底部在圖片座標系的位置
-        // 轉換為 PDF 座標：pageHeight - (y + height) = PDF Y
+        // 根据用户建议的正确公式：
+        // pdfY = pageHeight - (ocrY + height * 0.8)
+        // 这样可以同时完成 Y 轴翻转和基线调整
         float pdfX = (float) tp.getX();
-        float pdfY = pageHeight - (float) (tp.getY() + tp.getHeight());
         float fontSize = (float) tp.getFontSize();
         
         // 如果字體大小無效，使用預設值
@@ -152,10 +152,10 @@ public class PdfBoxServiceImpl implements PdfService {
             log.warn("字體大小無效（{}），使用預設值: {}", tp.getFontSize(), fontSize);
         }
         
-        // 修正 Y 坐标：newLineAtOffset 設置的是基線位置，不是邊界框底部
-        // 基線偏移量約為字體大小的 25%（根據調試結果）
-        float baselineOffset = fontSize * 0.25f;
-        pdfY += baselineOffset;
+        // 正确的坐标转换：
+        // 1. Y 轴翻转：pageHeight - ocrY
+        // 2. 基线调整：减去 height * 0.8（基线在文字块顶部下方 80% 的位置）
+        float pdfY = pageHeight - (float) (tp.getY() + tp.getHeight() * 0.8f);
         
         // 如果字體為 null，使用預設字體大小估算
         if (font == null) {
