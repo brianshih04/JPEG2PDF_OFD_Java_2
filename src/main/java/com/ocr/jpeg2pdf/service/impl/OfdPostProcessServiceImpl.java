@@ -119,11 +119,11 @@ public class OfdPostProcessServiceImpl implements OfdPostProcessService {
             float height = (float) tp.getHeight() * 25.4f / 72.0f;
             float fontSize = (float) tp.getFontSize() * 25.4f / 72.0f;
             
-            // 生成 TextObject (透明文字，符合 OFD 标准)
+            // 生成 TextObject (透明文字 - 对象级 Alpha)
             String text = escapeXml(tp.getText());
-            // 使用 Fill="false" Stroke="false" 实现不可见但可搜索的文字（OFD 标准推荐方式）
+            // 使用 Alpha="0" 实现完全透明（对象级透明度）
             textLayer.append(String.format(
-                "  <ofd:TextObject ID=\"%d\" Font=\"1\" Size=\"%.1f\" Boundary=\"%.1f %.1f %.1f %.1f\" Fill=\"false\" Stroke=\"false\">\n",
+                "  <ofd:TextObject ID=\"%d\" Font=\"1\" Size=\"%.1f\" Boundary=\"%.1f %.1f %.1f %.1f\" Alpha=\"0\">\n",
                 objectId++, fontSize, x, y, width, height
             ));
             textLayer.append(String.format(
