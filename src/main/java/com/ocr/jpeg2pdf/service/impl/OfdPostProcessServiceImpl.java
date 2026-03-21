@@ -119,14 +119,18 @@ public class OfdPostProcessServiceImpl implements OfdPostProcessService {
             float height = (float) tp.getHeight() * 25.4f / 72.0f;
             float fontSize = (float) tp.getFontSize() * 25.4f / 72.0f;
             
-            // 生成 TextObject (透明文字 - 颜色级 Alpha)
+            // 生成 TextObject (透明文字 - 使用 GraphicUnit/FillParam/ColorValue)
             String text = escapeXml(tp.getText());
-            // 使用 FillColor Alpha="0" 实现颜色级透明（第三种标准方式）
             textLayer.append(String.format(
                 "  <ofd:TextObject ID=\"%d\" Font=\"1\" Size=\"%.1f\" Boundary=\"%.1f %.1f %.1f %.1f\">\n",
                 objectId++, fontSize, x, y, width, height
             ));
-            textLayer.append("    <ofd:FillColor Value=\"0 0 0\" Alpha=\"0\"/>\n");
+            // 使用 GraphicUnit > FillParam > ColorValue 结构设置透明度
+            textLayer.append("    <ofd:GraphicUnit>\n");
+            textLayer.append("      <ofd:FillParam>\n");
+            textLayer.append("        <ofd:ColorValue Red=\"0\" Green=\"0\" Blue=\"0\" Alpha=\"0\"/>\n");
+            textLayer.append("      </ofd:FillParam>\n");
+            textLayer.append("    </ofd:GraphicUnit>\n");
             textLayer.append(String.format(
                 "    <ofd:TextCode X=\"%.1f\" Y=\"%.1f\">%s</ofd:TextCode>\n",
                 x, y, text
