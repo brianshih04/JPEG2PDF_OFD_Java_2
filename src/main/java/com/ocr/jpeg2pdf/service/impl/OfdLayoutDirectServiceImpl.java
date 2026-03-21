@@ -4,22 +4,32 @@ import com.ocr.jpeg2pdf.config.AppConfig;
 import com.ocr.jpeg2pdf.model.OcrResult;
 import com.ocr.jpeg2pdf.service.OfdService;
 import lombok.extern.slf4j.Slf4j;
-import org.ofdrw.converter.ofdconverter.PDFConverter;
+import org.ofdrw.layout.OFDDoc;
+import org.ofdrw.layout.PageLayout;
+import org.ofdrw.layout.VirtualPage;
+import org.ofdrw.layout.element.Img;
+import org.ofdrw.layout.element.Paragraph;
+import org.ofdrw.layout.element.Span;
+import org.ofdrw.layout.element.Position;
+import org.ofdrw.font.Font;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import javax.imageio.ImageIO;
-import java.io.File;
 
 /**
- * OFD 服务实现 - 使用 ofdrw-layout 直接生成双层 OFD
+ * OFD 服务实现 - 使用 ofdrw-layout 高级 API
+ * 
+ * 使用 OFDDoc + VirtualPage + Img + Span
+ * 通过 setOpacity(0.0) 实现不可见文字层
  */
 @Slf4j
 @Service
+@Primary
 public class OfdLayoutDirectServiceImpl implements OfdService {
     
     private final AppConfig config;
@@ -30,28 +40,111 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
     
     @Override
     public Path generateSearchableOfd(List<BufferedImage> images, List<OcrResult> ocrResults, Path outputPath) throws Exception {
-        log.info("使用 ofdrw-layout 直接生成双层 OFD（不通过 PDF 转换）");
+        log.info("使用 ofdrw-layout 高级 API 直接生成双层 OFD: {}", outputPath);
         
-        // 暂时抛出异常，需要研究 ofdrw-layout API
-        throw new UnsupportedOperationException("ofdrw-layout 直接生成 OFD 功能开发中");
+        // 临时保存图片
+        Path tempDir = Files.createTempDirectory("ofd_direct_");
+        
+        try (OFDDoc ofdDoc = new OFDDoc(outputPath)) {
+            
+            for (int i = 0; i < images.size(); i++) {
+                BufferedImage image = images.get(i);
+                OcrResult ocrResult = ocrResults.get(i);
+                
+                log.info("处理第 {} 页，图片尺寸: {}x{}, OCR 文字数: {}", 
+                    i + 1, image.getWidth(), image.getHeight(), ocrResult.getTextPositions().size());
+                
+                // 保存临时图片
+                Path tempImage = tempDir.resolve("page_" + i + ".png");
+                ImageIO.write(image, "PNG", tempImage.toFile());
+                
+                // 转换坐标：像素 -> mm (假设 DPI = 72)
+                double widthMm = image.getWidth() * 25.4 / 72.0;
+                double heightMm = image.getHeight() * 25.4 / 72.0;
+                
+                // 创建页面布局
+                PageLayout pageLayout = new PageLayout(widthMm, heightMm);
+                pageLayout.setMargin(0d);
+                
+                // 创建虚拟页面
+                VirtualPage vPage = new VirtualPage(pageLayout);
+                
+                // 添加背景图片
+                Img img = new Img(tempImage);
+                img.setPosition(Position.Absolute)
+                   .setX(0d)
+                   .setY(0d)
+                   .setWidth(widthMm)
+                   .setHeight(heightMm);
+                vPage.add(img);
+                
+                // 添加不可见文字层
+                int textCount = 0;
+                for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
+                    try {
+                        // 转换坐标
+                        double x = tp.getX() * 25.4 / 72.0;
+                        double y = heightMm - (tp.getY() + tp.getHeight()) * 25.4 / 72.0;
+                        double fontSize = tp.getFontSize() * 25.4 / 72.0;
+                        
+                        // 创建文字片段
+                        Span span = new Span(tp.getText());
+                        span.setFontSize(fontSize);
+                        // Span 不支持 setOpacity，需要在 Paragraph 上设置
+                        
+                        // 创建段落
+                        Paragraph p = new Paragraph();
+                        p.add(span);
+                        p.setOpacity(0.0);  // 在段落上设置透明度
+                        p.setPosition(Position.Absolute)
+                         .setX(x)
+                         .setY(y)
+                         .setWidth(tp.getWidth() * 25.4 / 72.0);
+                        
+                        // 添加到页面
+                        vPage.add(p);
+                        textCount++;
+                    } catch (Exception e) {
+                        log.warn("添加文字失败: {} - {}", tp.getText(), e.getMessage());
+                    }
+                }
+                
+                // 添加页面到文档
+                ofdDoc.addVPage(vPage);
+                
+                log.info("第 {} 页处理完成，添加 {} 个文字对象", i + 1, textCount);
+            }
+            
+            log.info("OFD 文档生成完成: {}", outputPath);
+        } catch (Exception e) {
+            log.error("生成 OFD 失败", e);
+            throw e;
+        } finally {
+            // 清理临时文件
+            deleteDirectory(tempDir);
+        }
+        
+        return outputPath;
     }
     
     /**
-     * 使用 ofdrw-layout 直接生成双层 OFD
-     * 
-     * @param images 图片列表
-     * @param ocrResults OCR 结果列表
-     * @param outputPath 输出路径
+     * 删除目录
      */
-    public Path generateDirectOfd(List<BufferedImage> images, List<OcrResult> ocrResults, Path outputPath) throws Exception {
-        log.info("开始直接生成双层 OFD: {}", outputPath);
-        
-        // TODO: 实现使用 ofdrw-layout API
-        // 1. 创建 OFDDoc
-        // 2. 为每张图片创建页面
-        // 3. 添加图片层
-        // 4. 添加不可见文字层
-        
-        throw new UnsupportedOperationException("ofdrw-layout API 研究中");
+    private void deleteDirectory(Path path) {
+        if (Files.exists(path)) {
+            try {
+                Files.walk(path)
+                    .sorted((a, b) -> -a.compareTo(b))
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p);
+                        } catch (Exception e) {
+                            log.warn("删除文件失败: {}", p);
+                        }
+                    });
+            } catch (Exception e) {
+                log.warn("删除目录失败: {}", path);
+            }
+        }
     }
 }
