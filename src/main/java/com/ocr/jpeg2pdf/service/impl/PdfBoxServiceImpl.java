@@ -152,10 +152,9 @@ public class PdfBoxServiceImpl implements PdfService {
             log.warn("字體大小無效（{}），使用預設值: {}", tp.getFontSize(), fontSize);
         }
         
-        // 修正 Y 坐標：newLineAtOffset 設置的是基線位置，不是邊界框底部
-        // 基線偏移量約為字體大小的 25%（根據調試結果：22.36 / 20.8 ≈ 1.07）
-        // 經過測試，使用字體大小的 80% 作為偏移量效果最好
-        float baselineOffset = fontSize * 0.8f;
+        // 修正 Y 坐标：newLineAtOffset 設置的是基線位置，不是邊界框底部
+        // 基線偏移量約為字體大小的 25%（根據調試結果）
+        float baselineOffset = fontSize * 0.25f;
         pdfY += baselineOffset;
         
         // 如果字體為 null，使用預設字體大小估算
