@@ -229,6 +229,10 @@ public class OcrController {
                 case "searchable_pdf":
                     pdfService.generateSearchablePdf(images, ocrResults, outputPath);
                     break;
+                case "ofd":
+                    // 使用 ofdrw-layout 直接生成 OFD（方案 B）
+                    ofdService.generateSearchableOfd(images, ocrResults, outputPath);
+                    break;
                 case "searchable_ofd":
                     // 步骤 1: 先生成 PDF（可见文字）
                     Path tempPdf = outputDir.resolve("temp_" + timestamp + ".pdf");
@@ -336,7 +340,7 @@ public class OcrController {
     private String getExtension(String format) {
         return switch (format) {
             case "searchable_pdf" -> ".pdf";
-            case "searchable_ofd" -> ".ofd";
+            case "ofd", "searchable_ofd" -> ".ofd";
             case "text" -> ".txt";
             default -> ".bin";
         };

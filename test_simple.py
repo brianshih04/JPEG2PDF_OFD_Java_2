@@ -41,7 +41,7 @@ if ocr_response.status_code != 200:
 print(f"OCR success")
 
 # 3. Export
-formats = ["text", "searchable_pdf", "searchable_ofd"]
+formats = ["text", "searchable_pdf", "ofd"]  # 使用 "ofd" 测试方案 B
 
 for i, fmt in enumerate(formats, 3):
     print(f"\n[{i}/4] Exporting {fmt}...")
