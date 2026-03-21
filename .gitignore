@@ -3,3 +3,14 @@
 
 # 保留测试脚本
 !test_simple.py
+
+# Log files
+*.log
+
+# Target directory (Maven output)
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
