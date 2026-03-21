@@ -82,20 +82,22 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                 int textCount = 0;
                 for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
                     try {
-                        // 转换坐标
+                        // 转换坐标：像素 -> mm
                         double x = tp.getX() * 25.4 / 72.0;
-                        double y = heightMm - (tp.getY() + tp.getHeight()) * 25.4 / 72.0;
                         double fontSize = tp.getFontSize() * 25.4 / 72.0;
+                        
+                        // Y 轴转换（OFD 和 PDF 坐标系统相同）
+                        // 使用和 PDF 相同的公式
+                        double y = heightMm - (tp.getY() + tp.getHeight() * 0.8) * 25.4 / 72.0;
                         
                         // 创建文字片段
                         Span span = new Span(tp.getText());
                         span.setFontSize(fontSize);
-                        // Span 不支持 setOpacity，需要在 Paragraph 上设置
                         
                         // 创建段落
                         Paragraph p = new Paragraph();
                         p.add(span);
-                        p.setOpacity(0.0);  // 在段落上设置透明度
+                        p.setOpacity(0.0);  // 完全透明
                         p.setPosition(Position.Absolute)
                          .setX(x)
                          .setY(y)
