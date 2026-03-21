@@ -6,6 +6,7 @@ import com.ocr.jpeg2pdf.model.OcrResult;
 import com.ocr.jpeg2pdf.service.OcrService;
 import com.ocr.jpeg2pdf.service.PdfService;
 import com.ocr.jpeg2pdf.service.OfdService;
+import com.ocr.jpeg2pdf.service.OfdPostProcessService;
 import com.ocr.jpeg2pdf.service.impl.OfdrwServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class OcrController {
     private final OcrService ocrService;
     private final PdfService pdfService;
     private final OfdService ofdService;
+    private final OfdPostProcessService ofdPostProcessService;
     private final AppConfig appConfig;  // 注入配置
     
     // 暫存已上傳的圖片
@@ -228,19 +230,25 @@ public class OcrController {
                     pdfService.generateSearchablePdf(images, ocrResults, outputPath);
                     break;
                 case "searchable_ofd":
-                    // 先生成 PDF（可見文字），再轉換為 OFD
+                    // 步骤 1: 先生成 PDF（可见文字）
                     Path tempPdf = outputDir.resolve("temp_" + timestamp + ".pdf");
                     
-                    // 使用可見文字的 PDF（用於 OFD 轉換）
+                    // 使用可见文字的 PDF（用于 OFD 转换）
                     pdfService.generateSearchablePdfForOfd(images, ocrResults, tempPdf);
                     
-                    // 使用 ofdrw-converter 將 PDF 轉換為 OFD
+                    // 步骤 2: 转换为 OFD（只有图片）
+                    Path tempOfd = outputDir.resolve("temp_" + timestamp + ".ofd");
                     if (ofdService instanceof OfdrwServiceImpl) {
-                        ((OfdrwServiceImpl) ofdService).convertPdfToOfd(tempPdf, outputPath);
-                        // 刪除臨時 PDF
+                        ((OfdrwServiceImpl) ofdService).convertPdfToOfd(tempPdf, tempOfd);
+                        
+                        // 步骤 3: 添加文字层
+                        ofdPostProcessService.addTextLayerToOfd(tempOfd, ocrResults, outputPath);
+                        
+                        // 步骤 4: 删除临时文件
                         Files.deleteIfExists(tempPdf);
+                        Files.deleteIfExists(tempOfd);
                     } else {
-                        throw new RuntimeException("OFD 服務類型不正確");
+                        throw new RuntimeException("OFD 服务类型不正确");
                     }
                     break;
                 case "text":
