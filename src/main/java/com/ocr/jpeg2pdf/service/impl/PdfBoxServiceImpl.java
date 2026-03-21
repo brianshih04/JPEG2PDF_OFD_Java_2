@@ -174,14 +174,45 @@ public class PdfBoxServiceImpl implements PdfService {
             contentStream.setFont(font, fontSize);
             contentStream.setRenderingMode(RenderingMode.NEITHER);
             
-            // 移動到正確位置
-            contentStream.newLineAtOffset(pdfX, pdfY);
+            // X 轴修复：计算水平缩放因子
+            // 使 PDF 文字宽度精确匹配 OCR 宽度
+            float horizontalFixScale = 1.0f;
+            try {
+                // 1. 获取 OCR 宽度（PDF 点数）
+                float ocrWidthPdf = (float) tp.getWidth();
+                
+                // 2. 计算标准字体宽度
+                float standardWidth = font.getStringWidth(tp.getText()) / 1000f * fontSize;
+                
+                // 3. 计算缩放因子
+                if (standardWidth > 0) {
+                    horizontalFixScale = ocrWidthPdf / standardWidth;
+                    
+                    // Debug: 如果缩放因子偏离 1.0 很多，说明字体差异大
+                    if (Math.abs(horizontalFixScale - 1.0f) > 0.1f) {
+                        log.debug("X-Fix Scale for '{}': {:.2f} (OCR: {:.1f}, Standard: {:.1f})", 
+                            tp.getText(), horizontalFixScale, ocrWidthPdf, standardWidth);
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("无法计算水平缩放因子: {}", e.getMessage());
+            }
+            
+            // 使用文字矩阵设置位置和缩放
+            // Matrix(sx, 0, 0, sy, tx, ty)
+            // sx: 水平缩放
+            // sy: 垂直缩放 (1.0，Y 轴已正确)
+            // tx, ty: 坐标
+            org.apache.pdfbox.util.Matrix textMatrix = 
+                new org.apache.pdfbox.util.Matrix(horizontalFixScale, 0, 0, 1, pdfX, pdfY);
+            contentStream.setTextMatrix(textMatrix);
             
             // 顯示文字（透明）
             contentStream.showText(tp.getText());
             contentStream.endText();
             
-            log.debug("繪製透明文字: {} at ({}, {})", tp.getText(), pdfX, pdfY);
+            log.debug("繪製透明文字: {} at ({}, {}), scale: {:.2f}", 
+                tp.getText(), pdfX, pdfY, horizontalFixScale);
             
         } catch (Exception e) {
             log.warn("繪製文字失敗: {} - {}", tp.getText(), e.getMessage());
