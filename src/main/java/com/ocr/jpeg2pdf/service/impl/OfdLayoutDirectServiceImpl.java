@@ -93,9 +93,10 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         
                         // 3. 字号保持 0.75 完美比例
                         double fontSizeMm = ocrH * 0.75;
+                        float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
                         
                         // =========================================================
-                        // 4. ⭐️ 拔除 AWT！使用纯手工「字符特征估算法」
+                        // 4. ⭐️ 保留这次成功的 X 轴：纯手工「字符特征估算法」
                         // 这 样算出来的宽度，永远稳定，换哪台电脑跑都不会变！
                         double estimatedOfdWidth = 0;
                         for (int charIndex = 0; charIndex < text.length(); charIndex++) {
@@ -132,8 +133,19 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         }
                         // =========================================================
                         
-                        // 6. Y 轴也拔除 AWT，使用稳定的 0.8 比例来模拟 Ascent
-                        double paragraphY = (ocrY + (ocrH * 0.76)) - (fontSizeMm * 0.8);
+                        // =========================================================
+                        // 6. ⭐️ 找回之前完美的 Y 轴：用 AWT 精准抓取基准线 Ascent
+                        // 只用 AWT 算高低，不算宽窄
+                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, 1)
+                            .deriveFont(fontSizePt);
+                        java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
+                        
+                        double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
+                        double ascentMm = ascentPt * 25.4 / 72.0;
+                        
+                        // 使用之前证实完美的 0.76 基准线比例
+                        double paragraphY = (ocrY + (ocrH * 0.76)) - ascentMm;
+                        // =========================================================
                         
                         // 3. 创建文字片段（先用红色测试对齐）
                         Span span = new Span(text);
