@@ -91,20 +91,19 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // Baseline = Y + fontSize * 0.85（经验值）
                         double y = tp.getY() * 25.4 / 72.0 + fontSizeMm * 0.85;
                         
-                        // 创建文字片段
+                        // 创建文字片段（使用白色文字）
                         Span span = new Span(tp.getText());
+                        span.setColor(255, 255, 255); // 纯白色
                         span.setFontSize(fontSizeMm);
                         
                         // 创建段落
                         Paragraph p = new Paragraph();
                         p.add(span);
                         
-                        // 关键修复：不使用 Opacity=0（会被 WPS 过滤）
-                        // 使用极低透明度的颜色（Alpha=1/255 ≈ 0.004）
-                        // 这样文字几乎不可见，但搜索引擎可以找到
-                        p.setOpacity(1.0);  // 保持不透明度
-                        // 注意：ofdrw-layout 会自动设置 Alpha="0"
-                        // 我们需要在生成后修改 XML，或使用其他方法
+                        // 关键修复：1% 不透明度 + 白色文字
+                        // - WPS 会索引（因为不是 0% 透明）
+                        // - 肉眼几乎看不见（白色 + 1% 不透明度）
+                        p.setOpacity(0.01);
                         
                         p.setPosition(Position.Absolute)
                          .setX(x)
