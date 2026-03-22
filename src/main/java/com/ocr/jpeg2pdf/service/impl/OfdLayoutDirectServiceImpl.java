@@ -82,32 +82,44 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                 int textCount = 0;
                 for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
                     try {
-                        // 转换坐标：像素 -> mm
-                        double ocrWidthMm = tp.getWidth() * 25.4 / 72.0;
-                        double ocrHeightMm = tp.getHeight() * 25.4 / 72.0;
-                        double x_mm = tp.getX() * 25.4 / 72.0;
-                        double y_mm = tp.getY() * 25.4 / 72.0;
+                        // 1. 取得 OCR 边界框 (确保全部转换为 mm)
+                        double ocrX = tp.getX() * 25.4 / 72.0;
+                        double ocrY = tp.getY() * 25.4 / 72.0;
+                        double ocrW = tp.getWidth() * 25.4 / 72.0;
+                        double ocrH = tp.getHeight() * 25.4 / 72.0;
                         String text = tp.getText();
                         
-                        // ⭐️ 核心修正 1：字号系数 0.65
-                        // 让字体稍微饱满一点，更贴合原字
-                        double fontSizeMm = ocrHeightMm * 0.65; // 从 0.6 改为 0.65
+                        // 2. 设定字号 (取框高的 75%，这是一个最稳定的大小)
+                        double fontSizeMm = ocrH * 0.75;
                         
-                        // 1. 计算 AWT 标准宽度
-                        java.awt.Font awtFont = new java.awt.Font("SimSun", java.awt.Font.PLAIN, 12)
-                            .deriveFont((float)(fontSizeMm * 72 / 25.4));
+                        // =========================================================
+                        // 3. ⭐️ 科学测量：使用 AWT 动态提取字型度量 (严格控制 Pt 与 mm 转换)
+                        // AWT 测量必须使用 Point (pt)，所以将 mm 转为 pt
+                        float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
+                        java.awt.Font awtFont = new java.awt.Font("SimSun", java.awt.Font.PLAIN, 1)
+                            .deriveFont(fontSizePt);
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
-                        double awtWidthMm = awtFont.getStringBounds(text, frc).getWidth() * 25.4 / 72;
                         
-                        // 2. ⭐️ 终极修正 1：扣除 OCR 边距，防止字体被过度拉宽
-                        // PaddleOCR 检测的宽度包含左右背景边距（Padding）
-                        // 将 OCR 宽度打 95 折，模拟真实字迹的宽度
-                        double actualTargetWidth = ocrWidthMm * 0.95; // 关键修正！
+                        // 测量字串实际宽度 (AWT 给的是 Pt，转回 mm)
+                        double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
+                        double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
+                        // 测量字型上升高度 Ascent (AWT 给的是 Pt，转回 mm)
+                        double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
+                        double ascentMm = ascentPt * 25.4 / 72.0;
+                        // =========================================================
+                        
+                        // 4. X 轴：精确字距计算 (不打折，还原真实 OCR 宽度)
                         double letterSpacing = 0;
                         if (text.length() > 1) {
-                            letterSpacing = (actualTargetWidth - awtWidthMm) / Math.max(1, text.length() - 1);
+                            letterSpacing = (ocrW - awtWidthMm) / (text.length() - 1);
                         }
+                        
+                        // 5. Y 轴：抛弃魔法数字，使用科学对齐
+                        // 假设 OCR 框的下缘往上 20% 是真实字迹的基准线 (Baseline)
+                        double ocrBaselineY = ocrY + (ocrH * 0.80);
+                        // Paragraph 需要的 Y = 基准线 - Ascent
+                        double paragraphY = ocrBaselineY - ascentMm;
                         
                         // 3. 创建文字片段（先用红色测试对齐）
                         Span span = new Span(text);
@@ -126,14 +138,11 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         p.setLineSpace(0d);
                         
                         // 6. 给超大宽度，绝对不换行
-                        p.setWidth(ocrWidthMm + 100.0);
+                        p.setWidth(ocrW + 100.0);
                         
-                        // 7. ⭐️ 终极修正 2：再往下推一点
-                        // 从 0.18 改为 0.25，把微偏高的红字压回黑字的正上方
-                        // 原因：中文字型和英文字型的内部 Ascent 计算差异
-                        double yOffset = ocrHeightMm * 0.25; // 从 0.18 改为 0.25
-                        p.setX(x_mm);
-                        p.setY(y_mm + yOffset);
+                        // 7. 设置 X、Y 座标
+                        p.setX(ocrX);
+                        p.setY(paragraphY);
                         
                         // 8. 先用完全不透明测试对齐
                         p.setOpacity(1.0); // 完全可见（调试）
