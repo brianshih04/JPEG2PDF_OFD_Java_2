@@ -99,10 +99,14 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         double awtWidthMm = awtFont.getStringBounds(text, frc).getWidth() * 25.4 / 72;
                         
-                        // 2. ⭐️ 字距安全计算 (加入 Math.max 防止除以 0)
+                        // 2. ⭐️ 终极修正 1：扣除 OCR 边距，防止字体被过度拉宽
+                        // PaddleOCR 检测的宽度包含左右背景边距（Padding）
+                        // 将 OCR 宽度打 95 折，模拟真实字迹的宽度
+                        double actualTargetWidth = ocrWidthMm * 0.95; // 关键修正！
+                        
                         double letterSpacing = 0;
                         if (text.length() > 1) {
-                            letterSpacing = (ocrWidthMm - awtWidthMm) / Math.max(1, text.length() - 1);
+                            letterSpacing = (actualTargetWidth - awtWidthMm) / Math.max(1, text.length() - 1);
                         }
                         
                         // 3. 创建文字片段（先用红色测试对齐）
@@ -124,14 +128,10 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 6. 给超大宽度，绝对不换行
                         p.setWidth(ocrWidthMm + 100.0);
                         
-                        // 7. ⭐️ 关键修正：把 Y 轴拉回框内！
-                        // ofdrw-layout 的 setY() 是设置左上角 (Top-Left)，不是 Baseline
-                        // 之前 yOffset = 0.85 会把文字推到下一行
-                        // 
-                        // 计算逻辑：
-                        //   字号 = 0.65 * 框高
-                        //   顶部留白 = (1.0 - 0.65) / 2 ≈ 0.175 ≈ 0.18
-                        double yOffset = ocrHeightMm * 0.18; // 从 0.85 改为 0.18
+                        // 7. ⭐️ 终极修正 2：再往下推一点
+                        // 从 0.18 改为 0.25，把微偏高的红字压回黑字的正上方
+                        // 原因：中文字型和英文字型的内部 Ascent 计算差异
+                        double yOffset = ocrHeightMm * 0.25; // 从 0.18 改为 0.25
                         p.setX(x_mm);
                         p.setY(y_mm + yOffset);
                         
