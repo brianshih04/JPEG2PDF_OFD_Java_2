@@ -95,51 +95,25 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double fontSizeMm = ocrH * 0.75;
                         float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
                         
-                        // =========================================================
-                        // 4. ⭐️ 保留这次成功的 X 轴：纯手工「字符特征估算法」
-                        // 这 样算出来的宽度，永远稳定，换哪台电脑跑都不会变！
-                        double estimatedOfdWidth = 0;
-                        for (int charIndex = 0; charIndex < text.length(); charIndex++) {
-                            char c = text.charAt(charIndex);
-                            if ("ijl1tfrIJL:;.,|'!-() ".indexOf(c) != -1) {
-                                estimatedOfdWidth += fontSizeMm * 0.3; // 窄字符与空白
-                            } else if ("mwMW".indexOf(c) != -1) {
-                                estimatedOfdWidth += fontSizeMm * 0.85; // 宽字符
-                            } else if (Character.isUpperCase(c)) {
-                                estimatedOfdWidth += fontSizeMm * 0.65; // 大写字母
-                            } else if (c >= '\u4e00' && c <= '\u9fa5') {
-                                estimatedOfdWidth += fontSizeMm * 1.0; // 中文字
-                            } else {
-                                estimatedOfdWidth += fontSizeMm * 0.55; // 标准小写字母与数字
-                            }
-                        }
-                        
-                        // 稍微打折 (0.95)，确保公式会给出一点点正数的 letterSpacing 来完美撑开
-                        estimatedOfdWidth = estimatedOfdWidth * 0.95;
-                        
-                        // =========================================================
-                        // 5. ⭐️ 计算 letterSpacing（使用启发式宽度）
-                        double letterSpacing = 0;
-                        if (text.length() > 1) {
-                            letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
-                            
-                            // 給予極度寬鬆的防呆限制，允許正常壓縮與拉伸
-                            if (letterSpacing < -1.5) {
-                                letterSpacing = -1.5;
-                            }
-                            if (letterSpacing > 2.0) {
-                                letterSpacing = 2.0;
-                            }
-                        }
-                        // =========================================================
-                        
-                        // =========================================================
-                        // 6. ⭐️ 找回之前完美的 Y 轴：用 AWT 精准抓取基准线 Ascent
-                        // 只用 AWT 算高低，不算宽窄
-                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, 1)
+                        // 3. 使用 SERIF（衬线体），最符合这份底图的英文字型特征
+                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SERIF, java.awt.Font.PLAIN, 1)
                             .deriveFont(fontSizePt);
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
+                        // =========================================================
+                        // 4. ⭐️ 终极 X 轴：无系数、无极限的纯物理计算
+                        double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
+                        double awtWidthMm = awtWidthPt * 25.4 / 72.0;
+                        
+                        double letterSpacing = 0;
+                        if (text.length() > 1) {
+                            // 真实的 OCR 宽度减去真实的 AWT 测量宽度，直接平均分配！
+                            // 🚫 绝对不加任何 if (letterSpacing < -0.5) 的限制，该压多扁就压多扁！
+                            letterSpacing = (ocrW - awtWidthMm) / (text.length() - 1);
+                        }
+                        // =========================================================
+                        
+                        // 5. 保留完美的 Y 轴公式
                         double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
                         double ascentMm = ascentPt * 25.4 / 72.0;
                         
