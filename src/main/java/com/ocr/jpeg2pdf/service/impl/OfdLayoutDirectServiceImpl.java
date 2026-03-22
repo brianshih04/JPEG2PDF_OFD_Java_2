@@ -78,37 +78,33 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                    .setHeight(heightMm);
                 vPage.add(img);
                 
-                // 添加不可见文字层（方案 A：精确宽度对齐）
+                // 添加不可见文字层
                 int textCount = 0;
                 for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
                     try {
-                        // 转换坐标：像素 -> mm（假设 OCR 是 72 DPI）
+                        // 转换坐标：像素 -> mm
                         double x = tp.getX() * 25.4 / 72.0;
-                        double y = tp.getY() * 25.4 / 72.0;
-                        double ocrWidthMm = tp.getWidth() * 25.4 / 72.0;
+                        double fontSize = tp.getFontSize() * 25.4 / 72.0;
                         
-                        // 字号：使用 height * 0.8 缩小一点，避免选区重叠
-                        double fontSizeMm = tp.getHeight() * 25.4 / 72.0 * 0.8;
+                        // Y 轴转换
+                        // OFD 使用 Y-down 坐标系统（原点在左上角）
+                        // OCR 也是 Y-down 坐标系统
+                        // 所以直接转换，不需要翻转
+                        // 但是需要调整基线：baseline = y + height * 0.8
+                        double y = (tp.getY() + tp.getHeight() * 0.8) * 25.4 / 72.0;
                         
                         // 创建文字片段
                         Span span = new Span(tp.getText());
-                        span.setFontSize(fontSizeMm);
+                        span.setFontSize(fontSize);
                         
                         // 创建段落
                         Paragraph p = new Paragraph();
                         p.add(span);
-                        
-                        // 强制设置 Paragraph 宽度为 OCR 检测到的宽度
-                        // ofdrw-layout 会根据此宽度进行 TextLayout 水平缩放
-                        p.setWidth(ocrWidthMm);
-                        
-                        // 设置位置（使用 setLeft 和 setTop）
+                        p.setOpacity(0.0);  // 完全透明
                         p.setPosition(Position.Absolute)
-                         .setLeft(x)
-                         .setTop(y);
-                        
-                        // 设置透明度（让文字看不见但选得到）
-                        p.setOpacity(0.0);
+                         .setX(x)
+                         .setY(y)
+                         .setWidth(tp.getWidth() * 25.4 / 72.0);
                         
                         // 添加到页面
                         vPage.add(p);
