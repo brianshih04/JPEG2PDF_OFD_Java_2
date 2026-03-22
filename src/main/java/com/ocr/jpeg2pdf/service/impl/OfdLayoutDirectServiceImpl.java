@@ -89,9 +89,10 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double y_mm = tp.getY() * 25.4 / 72.0;
                         String text = tp.getText();
                         
-                        // ⭐️ 核心修正 1：字号缩小
-                        // OCR 的框高包含了行距与留白，真实字号通常只有框高的 70%-80%
-                        double fontSizeMm = ocrHeightMm * 0.75; // 从 1.0 改为 0.75
+                        // ⭐️ 核心修正 1：字号大打折
+                        // 把字号强制缩小为 OCR 框高的 60%
+                        // OCR 框包含上下留白，实际字符只有框高的 60%-70%
+                        double fontSizeMm = ocrHeightMm * 0.6; // 从 0.75 改为 0.6
                         
                         // 1. 计算 AWT 标准宽度
                         java.awt.Font awtFont = new java.awt.Font("SimSun", java.awt.Font.PLAIN, 12)
@@ -99,10 +100,13 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         double awtWidthMm = awtFont.getStringBounds(text, frc).getWidth() * 25.4 / 72;
                         
-                        // 2. 核心魔法：计算 LetterSpacing（模拟 DeltaX）
+                        // 2. ⭐️ 核心修正：字距计算（允许负数）
+                        // 如果字号缩小后，awtWidth < ocrWidth → 正数 letterSpacing（拉伸）
+                        // 如果字体仍然太宽，awtWidth > ocrWidth → 负数 letterSpacing（压缩）
                         double letterSpacing = 0;
-                        if (text.length() > 1 && ocrWidthMm > awtWidthMm) {
+                        if (text.length() > 1) {
                             letterSpacing = (ocrWidthMm - awtWidthMm) / (text.length() - 1);
+                            // 允许负数，强制压缩宽度以匹配 OCR 框
                         }
                         
                         // 3. 创建文字片段（先用红色测试对齐）
@@ -124,9 +128,10 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 6. 给超大宽度，绝对不换行
                         p.setWidth(ocrWidthMm + 100.0);
                         
-                        // 7. ⭐️ 核心修正 2：Y 轴基准线向下推
-                        // 字号缩小后，Top 座标不再是左上角，需要将 Baseline 往下推
-                        double yOffset = ocrHeightMm * 0.8;
+                        // 7. ⭐️ 核心修正 3：Y 轴基准线向下推
+                        // 字号大幅缩小后（0.6），文字在原本的框里会偏上
+                        // 需要往下推大约 OCR 框高的 85%
+                        double yOffset = ocrHeightMm * 0.85; // 从 0.8 改为 0.85
                         p.setX(x_mm);
                         p.setY(y_mm + yOffset);
                         
