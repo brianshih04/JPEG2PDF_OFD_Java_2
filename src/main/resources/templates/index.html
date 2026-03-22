@@ -237,5 +237,78 @@
     </div>
 
     <script th:src="@{/js/app.js}"></script>
+    
+    <script>
+        // Watch Folder 功能
+        let isWatching = /*[[${isWatching}]]*/ false;
+        
+        // 初始化 Watch Folder 狀態
+        function initWatchFolder() {
+            updateWatchUI(isWatching);
+            document.getElementById('watch-info').classList.remove('hidden');
+        }
+        
+        // 切換監控狀態
+        async function toggleWatchFolder() {
+            try {
+                const response = await fetch('/api/watch/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    isWatching = result.isWatching;
+                    updateWatchUI(isWatching);
+                    showToast(result.message);
+                } else {
+                    showToast('操作失敗: ' + (result.error || '未知錯誤'));
+                }
+            } catch (error) {
+                showToast('操作失敗: ' + error.message);
+            }
+        }
+        
+        // 更新 UI 狀態
+        function updateWatchUI(watching) {
+            const btn = document.getElementById('watch-toggle-btn');
+            const toggle = document.getElementById('watch-toggle');
+            const label = document.getElementById('watch-label');
+            const icon = document.getElementById('watch-icon');
+            const statusText = document.getElementById('watch-status-text');
+            const info = document.getElementById('watch-info');
+            
+            if (watching) {
+                btn.classList.remove('bg-gray-300');
+                btn.classList.add('bg-green-500');
+                btn.setAttribute('data-watching', 'true');
+                toggle.style.transform = 'translateX(48px)';
+                label.textContent = 'ON';
+                icon.textContent = '✅';
+                statusText.textContent = '監控運行中 - 自動處理新上傳的圖片';
+                info.classList.remove('bg-gray-50', 'border-gray-200');
+                info.classList.add('bg-green-50', 'border-green-200');
+            } else {
+                btn.classList.remove('bg-green-500');
+                btn.classList.add('bg-gray-300');
+                btn.setAttribute('data-watching', 'false');
+                toggle.style.transform = 'translateX(0)';
+                label.textContent = 'OFF';
+                icon.textContent = '⏸️';
+                statusText.textContent = '監控已暫停';
+                info.classList.remove('bg-green-50', 'border-green-200');
+                info.classList.add('bg-gray-50', 'border-gray-200');
+            }
+        }
+        
+        // 綁定按鈕事件
+        document.getElementById('watch-toggle-btn').addEventListener('click', toggleWatchFolder);
+        
+        // 頁面加載時初始化
+        document.addEventListener('DOMContentLoaded', initWatchFolder);
+    </script>
 </body>
 </html>
