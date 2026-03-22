@@ -101,18 +101,23 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
                         // =========================================================
-                        // 4. ⭐️ 终极 X 轴：强力动态压缩
+                        // 4. ⭐️ 终极 X 轴：折线补偿法（加速中字压缩，限制小字上限）
                         double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
-                        // 破案关键：针对长句子进行强力动态施压
                         double widthMultiplier = 1.0;
                         
-                        // 当字数超过 10 个字，开始启动累积压缩机制
                         if (text.length() > 10) {
-                            // ⚠️ 调整压缩力度：0.002 → 0.003
-                            // 精确平衡压缩力度
-                            widthMultiplier = 1.0 + ((text.length() - 10) * 0.003);
+                            // 将斜率加倍到 0.006，让中字能快速获得足够的压缩力
+                            double extra = (text.length() - 10) * 0.006;
+                            
+                            // 🛡 踩刹车：设定最高压缩补偿上限为 0.18（也就是最高 1.18）
+                            // 这样小字长句就会维持在上一版「勉强可接受」的完美范围，不会再缩水！
+                            if (extra > 0.18) {
+                                extra = 0.18;
+                            }
+                            
+                            widthMultiplier = 1.0 + extra;
                         }
                         
                         double estimatedOfdWidth = awtWidthMm * widthMultiplier;
