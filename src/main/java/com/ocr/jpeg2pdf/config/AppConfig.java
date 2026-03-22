@@ -60,7 +60,7 @@ public class AppConfig {
         String home = System.getProperty("user.home");
         
         if (os.contains("win")) {
-            return "P:/OCR/Output";  // Windows
+            return "C:/OCR/Output";  // Windows
         } else if (os.contains("mac")) {
             return home + "/Documents/OCR/Output";  // macOS
         } else {
@@ -76,7 +76,7 @@ public class AppConfig {
         String home = System.getProperty("user.home");
         
         if (os.contains("win")) {
-            return "P:/OCR/Watch";
+            return "C:/OCR/Watch";
         } else if (os.contains("mac")) {
             return home + "/Documents/OCR/Watch";
         } else {
@@ -92,7 +92,7 @@ public class AppConfig {
         String home = System.getProperty("user.home");
         
         if (os.contains("win")) {
-            return "P:/OCR/Save";
+            return "C:/OCR/Save";
         } else if (os.contains("mac")) {
             return home + "/Documents/OCR/Save";
         } else {

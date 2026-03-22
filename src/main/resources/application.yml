@@ -10,10 +10,10 @@ spring:
       max-request-size: 100MB
 
 app:
-  output-folder: P:/OCR/Output
-  watch-folder: P:/OCR/Watch
-  save-folder: P:/OCR/Save
-  upload-folder: P:/OCR/temp
+  output-folder: C:/OCR/Output
+  watch-folder: C:/OCR/Watch
+  save-folder: C:/OCR/Save
+  upload-folder: C:/OCR/temp
   ocr-engine: rapidocr
   default-language: chinese_cht
   font-path: C:/Windows/Fonts/simsun.ttc
