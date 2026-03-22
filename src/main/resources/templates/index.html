@@ -73,24 +73,57 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">OCR 語言</label>
                     <select id="language" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        <option value="chinese_cht">繁體中文</option>
-                        <option value="ch">简体中文</option>
-                        <option value="en" selected>English</option>
-                        <option value="japan">日本語</option>
-                        <option value="korean">한국어 (韩文)</option>
-                        <option value="french">Français (法文)</option>
-                        <option value="german">Deutsch (德文)</option>
-                        <option value="spanish">Español (西班牙文)</option>
-                        <option value="italian">Italiano (意大利文)</option>
-                        <option value="portuguese">Português (葡萄牙文)</option>
-                        <option value="russian">Русский (俄文)</option>
-                        <option value="arabic">العربية (阿拉伯文)</option>
-                        <option value="hindi">हिन्दी (印地文)</option>
-                        <option value="vietnamese">Tiếng Việt (越南文)</option>
-                        <option value="thai">ไทย (泰文)</option>
-                        <option value="turkish">Türkçe (土耳其文)</option>
+                        <optgroup label="中文">
+                            <option value="chinese_cht">繁體中文</option>
+                            <option value="ch">简体中文</option>
+                        </optgroup>
+                        <optgroup label="英語系">
+                            <option value="en" selected>English</option>
+                            <option value="german">Deutsch (德文)</option>
+                            <option value="dutch">Nederlands (荷蘭文)</option>
+                        </optgroup>
+                        <optgroup label="拉丁語系（羅曼語族）">
+                            <option value="french">Français (法文)</option>
+                            <option value="spanish">Español (西班牙文)</option>
+                            <option value="portuguese">Português (葡萄牙文)</option>
+                            <option value="italian">Italiano (意大利文)</option>
+                            <option value="romanian">Română (羅馬尼亞文)</option>
+                            <option value="oc">Occitan (奥克西坦文)</option>
+                        </optgroup>
+                        <optgroup label="斯拉夫語系">
+                            <option value="russian">Русский (俄文)</option>
+                            <option value="ukrainian">Українська (烏克蘭文)</option>
+                            <option value="belarusian">Беларуская (白俄羅斯文)</option>
+                            <option value="bulgarian">Български (保加利亞文)</option>
+                            <option value="serbian_cyrillic">Српски ћирилица (塞爾維亞西里爾)</option>
+                            <option value="serbian_latin">Srpski latinica (塞爾維亞拉丁)</option>
+                            <option value="croatian">Hrvatski (克羅地亞文)</option>
+                            <option value="bosnian">Bosanski (波斯尼亞文)</option>
+                            <option value="slovenian">Slovenščina (斯洛文尼亞文)</option>
+                            <option value="slovak">Slovenčina (斯洛伐克文)</option>
+                            <option value="czech">Čeština (捷克文)</option>
+                            <option value="polish">Polski (波蘭文)</option>
+                        </optgroup>
+                        <optgroup label="亞洲語言">
+                            <option value="japan">日本語</option>
+                            <option value="korean">한국어 (韩文)</option>
+                            <option value="hindi">हिन्दी (印地文)</option>
+                            <option value="vietnamese">Tiếng Việt (越南文)</option>
+                            <option value="thai">ไทย (泰文)</option>
+                            <option value="arabic">العربية (阿拉伯文)</option>
+                            <option value="persian">فارسی (波斯文)</option>
+                            <option value="turkish">Türkçe (土耳其文)</option>
+                        </optgroup>
+                        <optgroup label="其他語言">
+                            <option value="hungarian">Magyar (匈牙利文)</option>
+                            <option value="greek">Ελληνικά (希臘文)</option>
+                            <option value="albanian">Shqip (阿爾巴尼亞文)</option>
+                            <option value="lithuanian">Lietuvių (立陶宛文)</option>
+                            <option value="latvian">Latviešu (拉脫維亞文)</option>
+                            <option value="estonian">Eesti (愛沙尼亞文)</option>
+                        </optgroup>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">支持 80+ 种语言，详见 LANGUAGES.md</p>
+                    <p class="text-xs text-gray-500 mt-1">支持 80+ 种语言（斯拉夫語系 + 拉丁語系），詳見 LANGUAGES.md</p>
                 </div>
                 
                 <div>
