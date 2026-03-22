@@ -105,12 +105,13 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 黄金系数 0.98 与双向安全锁
+                        // 5. ⭐️ 黄金系数 1.0 与双向安全锁
                         // Binary Search 验证记录：
                         //   0.92 → 尾巴多出一點點（微寬）
                         //   0.95 → 接近完美
-                        //   0.98 → 完美平衡！
-                        double estimatedOfdWidth = awtWidthMm * 0.98;
+                        //   0.98 → 完美平衡
+                        //   1.0 → 最终版本！
+                        double estimatedOfdWidth = awtWidthMm * 1.0;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
