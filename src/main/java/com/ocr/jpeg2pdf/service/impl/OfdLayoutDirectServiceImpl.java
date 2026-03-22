@@ -102,7 +102,7 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                             letterSpacing = (ocrWidthMm - awtWidthMm) / (text.length() - 1);
                         }
                         
-                        // 3. 创建文字片段（先用红色测试）
+                        // 3. 创建文字片段（先用红色测试对齐）
                         Span span = new Span(text);
                         span.setFontSize(fontSizeMm);
                         span.setLetterSpacing(letterSpacing); // 解决 X 轴不对齐的关键
@@ -121,13 +121,15 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 6. 给超大宽度，绝对不换行
                         p.setWidth(ocrWidthMm + 100.0);
                         
-                        // 7. Y 轴微调（向下推）
-                        double yOffset = ocrHeightMm * 0.15;
+                        // 7. Y 轴微调（向下推 - 根据 Y 轴偏高问题调整）
+                        double yOffset = ocrHeightMm * 0.8; // 从 0.15 增加到 0.8
                         p.setX(x_mm);
                         p.setY(y_mm + yOffset);
                         
-                        // 8. 1% 不透明度（WPS 兼容）
-                        p.setOpacity(0.01);
+                        // 8. 先用完全不透明测试对齐
+                        p.setOpacity(1.0); // 完全可见（调试）
+                        // 确认对齐后改为: p.setOpacity(0.01);
+                        // 确认对齐后改为: span.setColor(255, 255, 255);
                         
                         // 添加到页面
                         vPage.add(p);
