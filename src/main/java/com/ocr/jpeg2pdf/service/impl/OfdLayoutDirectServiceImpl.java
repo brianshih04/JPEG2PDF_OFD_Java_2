@@ -100,66 +100,67 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                             .deriveFont(fontSizePt);
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
-                        // =========================================================
-                        // 4. ⭐️ 终极 X 轴：开根号非线性补偿法
-                        double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
-                        double awtWidthMm = awtWidthPt * 25.4 / 72.0;
-                        
-                        // ⭐️ 套用开根号曲线 (加大压缩系数，从 0.025 提升到 0.035)
-                        double widthMultiplier = 1.0;
-                        
-                        if (text.length() > 10) {
-                            // 增加斜率，让中字和小字都能获得更强的向内收缩力！
-                            widthMultiplier = 1.0 + (0.035 * Math.sqrt(text.length() - 10));
-                        }
-                        
-                        double estimatedOfdWidth = awtWidthMm * widthMultiplier;
-                        
-                        double letterSpacing = 0;
-                        if (text.length() > 1) {
-                            letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
-                        }
-                        // =========================================================
-                        
-                        // 5. 保留完美的 Y 轴公式
+                        // 3. Y 轴保留完美公式
                         double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
                         double ascentMm = ascentPt * 25.4 / 72.0;
-                        
-                        // 使用之前证实完美的 0.76 基准线比例
                         double paragraphY = (ocrY + (ocrH * 0.76)) - ascentMm;
+                        
                         // =========================================================
+                        // 4. ⭐ 终极杀手锏：以字为单位的精准坐标计算
                         
-                        // 3. 创建文字片段（先用红色测试对齐）
-                        Span span = new Span(text);
-                        span.setFontSize(fontSizeMm);
-                        span.setLetterSpacing(letterSpacing); // 解决 X 轴不对齐的关键
-                        span.setColor(255, 0, 0); // 红色（测试对齐）
+                        // 4.1 先分别计算出每一个单一字母的 AWT 物理宽度
+                        double[] charWidthsMm = new double[text.length()];
+                        double totalAwtWidthMm = 0;
                         
-                        // 4. 创建段落
-                        Paragraph p = new Paragraph();
-                        p.add(span);
-                        p.setPosition(Position.Absolute);
+                        for (int charIdx = 0; charIdx < text.length(); charIdx++) {
+                            String singleChar = String.valueOf(text.charAt(charIdx));
+                            double wPt = awtFont.getStringBounds(singleChar, frc).getWidth();
+                            
+                            // 防呆：如果遇到空白，AWT 有时会回传 0，我们强制给予宽度
+                            if (singleChar.equals(" ") && wPt == 0) {
+                                wPt = fontSizePt * 0.3;
+                            }
+                            
+                            double wMm = wPt * 25.4 / 72.0;
+                            charWidthsMm[charIdx] = wMm;
+                            totalAwtWidthMm += wMm;
+                        }
                         
-                        // 5. 归零所有 Layout 引擎的干扰
-                        p.setMargin(0d);
-                        p.setPadding(0d);
-                        p.setLineSpace(0d);
+                        // 4.2 计算完美的「目标分配比例」
+                        // 也就是 OCR 给的总宽度，除以我们算出来的总宽度
+                        double scaleX = 1.0;
+                        if (totalAwtWidthMm > 0) {
+                            scaleX = ocrW / totalAwtWidthMm;
+                        }
                         
-                        // 6. 给超大宽度，绝对不换行
-                        p.setWidth(ocrW + 100.0);
+                        // 4.3 逐字强制绘制：剥夺 OFD 引擎的排版权，我们自己排！
+                        double currentX = ocrX;
                         
-                        // 7. 设置 X、Y 座标
-                        // ⭐️ 拔除偏移干扰，还原最准确的 X 起点（左边界已完美，不要破坏）
-                        p.setX(ocrX);
-                        p.setY(paragraphY);
-                        
-                        // 8. 先用完全不透明测试对齐
-                        p.setOpacity(1.0); // 完全可见（调试）
-                        // 确认对齐后改为: p.setOpacity(0.01);
-                        // 确认对齐后改为: span.setColor(255, 255, 255);
-                        
-                        // 添加到页面
-                        vPage.add(p);
+                        for (int charIdx = 0; charIdx < text.length(); charIdx++) {
+                            String singleChar = String.valueOf(text.charAt(charIdx));
+                            
+                            Span span = new Span(singleChar);
+                            span.setFontSize(fontSizeMm);
+                            span.setColor(255, 0, 0); // 测试红色
+                            
+                            Paragraph p = new Paragraph();
+                            p.add(span);
+                            p.setPosition(org.ofdrw.layout.element.Position.Absolute);
+                            p.setMargin(0d);
+                            p.setPadding(0d);
+                            p.setLineSpace(0d);
+                            p.setWidth(charWidthsMm[charIdx] * scaleX + 10.0); // 确保单字绝对不换行
+                            
+                            // ⭐ 强制指定这个字的 X 与 Y
+                            p.setX(currentX);
+                            p.setY(paragraphY);
+                            
+                            vPage.add(p);
+                            
+                            // ⭐ 坐标推进：把当前字的宽度 (乘上比例后) 加上去，作为下一个字的起点
+                            currentX += (charWidthsMm[charIdx] * scaleX);
+                        }
+                        // =========================================================
                         textCount++;
                     } catch (Exception e) {
                         log.warn("添加文字失败: {} - {}", tp.getText(), e.getMessage());
