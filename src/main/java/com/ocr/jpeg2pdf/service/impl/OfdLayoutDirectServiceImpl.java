@@ -101,23 +101,19 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
                         // =========================================================
-                        // 4. ⭐️ 终极 X 轴：折线补偿法（加速中字压缩，限制小字上限）
+                        // 4. ⭐️ 终极 X 轴：开根号非线性补偿法
                         double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
+                        // 这是经过精确计算的开根号曲线公式！
+                        // 它能完美符合我们测试出来的三个黄金点：
+                        // 长度 10 -> 系数 1.0 (大字不动)
+                        // 长度 30 -> 系数 1.11 (给予中字强大的初期压缩力，解决太宽问题)
+                        // 长度 75 -> 系数 1.20 (平滑过渡，完美还原小字长句的最佳压缩力)
                         double widthMultiplier = 1.0;
                         
                         if (text.length() > 10) {
-                            // 将斜率加倍到 0.006，让中字能快速获得足够的压缩力
-                            double extra = (text.length() - 10) * 0.006;
-                            
-                            // 🛡 踩刹车：设定最高压缩补偿上限为 0.18（也就是最高 1.18）
-                            // 这样小字长句就会维持在上一版「勉强可接受」的完美范围，不会再缩水！
-                            if (extra > 0.18) {
-                                extra = 0.18;
-                            }
-                            
-                            widthMultiplier = 1.0 + extra;
+                            widthMultiplier = 1.0 + (0.025 * Math.sqrt(text.length() - 10));
                         }
                         
                         double estimatedOfdWidth = awtWidthMm * widthMultiplier;
