@@ -101,19 +101,20 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
                         // =========================================================
-                        // 4. ⭐️ 终极 X 轴：反向动态压缩（大字不变，小字向内挤）
+                        // 4. ⭐️ 终极 X 轴：强力动态压缩
                         double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
-                        // 破案关键：针对长句子进行反向动态施压
+                        // 破案关键：针对长句子进行强力动态施压
                         double widthMultiplier = 1.0;
                         
-                        // 如果字数超过 10 个字（开始进入小字的长句子范围）
+                        // 当字数超过 10 个字，开始启动累积压缩机制
                         if (text.length() > 10) {
-                            // ⭐️ 方向反转：字数越多，我们把预估宽度"放大"
-                            // 例如：70 个字的长句 -> 1.0 + (70 * 0.0012) = 1.084
-                            // 预估宽度变大，公式算出的 letterSpacing 就会变负数，强力把字往内挤！
-                            widthMultiplier = 1.0 + (text.length() * 0.0012);
+                            // ⚠️ 关键重击：将 0.0012 加大 4 倍，改为 0.005！
+                            // 这会让 70 个字的长句子产生 1.3 倍的预估宽度，
+                            // 从而逼出强大的「负数字距 (letterSpacing)」，把暴冲的尾巴像弹簧一样扯回来！
+                            // 20 字 → 1.05, 50 字 → 1.2, 70 字 → 1.3
+                            widthMultiplier = 1.0 + ((text.length() - 10) * 0.005);
                         }
                         
                         double estimatedOfdWidth = awtWidthMm * widthMultiplier;
