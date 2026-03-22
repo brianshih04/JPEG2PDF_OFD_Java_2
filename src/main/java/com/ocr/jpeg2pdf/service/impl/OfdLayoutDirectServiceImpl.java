@@ -101,15 +101,26 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
                         // =========================================================
-                        // 4. ⭐️ 终极 X 轴：无系数、无极限的纯物理计算
+                        // 4. ⭐️ 终极 X 轴：反向动态压缩（大字不变，小字向内挤）
                         double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
+                        // 破案关键：针对长句子进行反向动态施压
+                        double widthMultiplier = 1.0;
+                        
+                        // 如果字数超过 10 个字（开始进入小字的长句子范围）
+                        if (text.length() > 10) {
+                            // ⭐️ 方向反转：字数越多，我们把预估宽度"放大"
+                            // 例如：70 个字的长句 -> 1.0 + (70 * 0.0012) = 1.084
+                            // 预估宽度变大，公式算出的 letterSpacing 就会变负数，强力把字往内挤！
+                            widthMultiplier = 1.0 + (text.length() * 0.0012);
+                        }
+                        
+                        double estimatedOfdWidth = awtWidthMm * widthMultiplier;
+                        
                         double letterSpacing = 0;
                         if (text.length() > 1) {
-                            // 真实的 OCR 宽度减去真实的 AWT 测量宽度，直接平均分配！
-                            // 🚫 绝对不加任何 if (letterSpacing < -0.5) 的限制，该压多扁就压多扁！
-                            letterSpacing = (ocrW - awtWidthMm) / (text.length() - 1);
+                            letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
                         }
                         // =========================================================
                         
