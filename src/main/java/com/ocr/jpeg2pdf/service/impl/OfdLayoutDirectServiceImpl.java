@@ -103,7 +103,7 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 3. Y 轴保留完美公式
                         double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
                         double ascentMm = ascentPt * 25.4 / 72.0;
-                        double paragraphY = (ocrY + (ocrH * 0.76)) - ascentMm;
+                        double paragraphY = (ocrY + (ocrH * 0.72)) - ascentMm;
                         
                         // =========================================================
                         // 4. ⭐ 终极杀手锏：以字为单位的精准坐标计算
