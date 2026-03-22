@@ -105,24 +105,25 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 黄金系数 1.0 与双向安全锁
-                        // Binary Search 验证记录：
+                        // 5. ⭐️ 最终冲刺：提高系数到 1.05 + 放宽压缩极限
+                        // 告诉系统字体偏宽，需要向内收缩
+                        // Binary Search 最终优化：
                         //   0.92 → 尾巴多出一點點（微寬）
                         //   0.95 → 接近完美
                         //   0.98 → 完美平衡
-                        //   1.0 → 最终版本！
-                        double estimatedOfdWidth = awtWidthMm * 1.0;
+                        //   1.0 → 最终版本
+                        //   1.05 → 最终冲刺！（增加压缩力道）
+                        double estimatedOfdWidth = awtWidthMm * 1.05;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
                             letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
                             
-                            // 🛡 防崩溃安全锁：限制字距的最大与最小极限
-                            // OFDRW 渲染引擎在 letterSpacing 超过临界值时会崩溃
-                            // 导致放弃压缩 → 红字暴冲
-                            // 现在加回双向安全锁，确保引擎稳定工作
-                            if (letterSpacing < -0.8) {
-                                letterSpacing = -0.8;
+                            // 🛡 放寬向下壓縮的極限！
+                            // 原本的 -0.8 太嚴格，會導致長句子無法成功縮短
+                            // 放寬到 -2.0，讓公式能夠 100% 把超出去的尾巴拉回來
+                            if (letterSpacing < -2.0) {
+                                letterSpacing = -2.0;
                             }
                             if (letterSpacing > 1.5) {
                                 letterSpacing = 1.5;
