@@ -89,22 +89,22 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double ocrH = tp.getHeight() * 25.4 / 72.0;
                         String text = tp.getText();
                         
-                        // 2. 设定字号 (取框高的 75%，这是一个最稳定的大小)
+                        // 2. 设定字号 (0.75 这个高度在截图里看起来非常完美，保持不变)
                         double fontSizeMm = ocrH * 0.75;
+                        float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
                         
                         // =========================================================
-                        // 3. ⭐️ 科学测量：使用 AWT 动态提取字型度量 (严格控制 Pt 与 mm 转换)
-                        // AWT 测量必须使用 Point (pt)，所以将 mm 转为 pt
-                        float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
-                        java.awt.Font awtFont = new java.awt.Font("SimSun", java.awt.Font.PLAIN, 1)
+                        // 3. ⭐️ 修正 1：换掉 SimSun！改用标准衬线体 (SERIF)
+                        // 这能确保英文字母的宽度测量准确，不会误判导致字距缩水
+                        // SimSun 的英文字母宽度非常宽，导致 AWT 测量误以为"已经够宽"
+                        // 改用 SERIF 后，awtWidthMm 会变小，letterSpacing 会变大，红字会撑开！
+                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SERIF, java.awt.Font.PLAIN, 1)
                             .deriveFont(fontSizePt);
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
-                        // 测量字串实际宽度 (AWT 给的是 Pt，转回 mm)
                         double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
-                        // 测量字型上升高度 Ascent (AWT 给的是 Pt，转回 mm)
                         double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
                         double ascentMm = ascentPt * 25.4 / 72.0;
                         // =========================================================
@@ -112,12 +112,20 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 4. X 轴：精确字距计算 (不打折，还原真实 OCR 宽度)
                         double letterSpacing = 0;
                         if (text.length() > 1) {
+                            // 现在 awtWidthMm 变准了，算出来的 letterSpacing 会变大，把红字精准撑开！
                             letterSpacing = (ocrW - awtWidthMm) / (text.length() - 1);
+                            
+                            // ⭐️ 防呆机制：如果 OCR 框真的很窄，至少不要让字挤成一团
+                            if (letterSpacing < -0.5) {
+                                letterSpacing = -0.5;
+                            }
                         }
                         
                         // 5. Y 轴：抛弃魔法数字，使用科学对齐
-                        // 假设 OCR 框的下缘往上 20% 是真实字迹的基准线 (Baseline)
-                        double ocrBaselineY = ocrY + (ocrH * 0.80);
+                        // ⭐️ 修正 2：Y 轴微微上提（0.80 → 0.76）
+                        // 将 0.80 改为 0.76，把稍微下沉的红字拉回正确的基准线上
+                        // 对于英文字体，基准线通常在框高的 0.75 ~ 0.76 左右
+                        double ocrBaselineY = ocrY + (ocrH * 0.76);
                         // Paragraph 需要的 Y = 基准线 - Ascent
                         double paragraphY = ocrBaselineY - ascentMm;
                         
