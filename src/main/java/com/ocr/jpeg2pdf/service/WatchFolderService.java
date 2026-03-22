@@ -12,6 +12,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -26,6 +27,15 @@ public class WatchFolderService {
     
     @Autowired
     private OcrService ocrService;
+    
+    @Autowired
+    private OfdService ofdService;
+    
+    @Autowired
+    private PdfService pdfService;
+    
+    @Autowired
+    private TextService textService;
     
     private Thread watchThread;
     private WatchService watchService;
@@ -154,44 +164,80 @@ public class WatchFolderService {
      */
     private void processImage(Path imagePath) {
         try {
-            log.info("🔄 處理圖片: {}", imagePath.getFileName());
+            log.info("🔄 開始處理圖片: {}", imagePath.getFileName());
             
             // 讀取圖片
             BufferedImage image = ImageIO.read(imagePath.toFile());
             
             if (image == null) {
-                log.error("無法讀取圖片: {}", imagePath);
+                log.error("❌ 無法讀取圖片: {}", imagePath);
                 return;
             }
+            
+            log.info("✅ 圖片讀取成功，開始 OCR...");
             
             // 執行 OCR
             OcrResult result = ocrService.recognize(image, config.getDefaultLanguage());
             
-            // 導出為默認格式（OFD）
+            if (result == null) {
+                log.error("❌ OCR 識別失敗");
+                return;
+            }
+            
+            log.info("✅ OCR 完成，開始導出文件...");
+            
+            // 生成時間戳
             String timestamp = LocalDateTime.now().format(
                 DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             
             String baseName = getBaseName(imagePath.getFileName().toString());
-            String outputPath = config.getOutputFolder() + "/" + baseName + "_" + timestamp;
+            String outputBase = config.getOutputFolder() + "/" + baseName + "_" + timestamp;
+            
+            // 準備列表參數
+            List<BufferedImage> images = java.util.Collections.singletonList(image);
+            List<OcrResult> results = java.util.Collections.singletonList(result);
             
             // 導出 OFD
-            exportOfd(result, outputPath + ".ofd");
+            String ofdPath = outputBase + ".ofd";
+            ofdService.generateSearchableOfd(images, results, Paths.get(ofdPath));
+            log.info("✅ OFD 已導出: {}", ofdPath);
             
-            // 移動已處理的圖片
+            // 導出 PDF
+            String pdfPath = outputBase + ".pdf";
+            pdfService.generateSearchablePdf(images, results, Paths.get(pdfPath));
+            log.info("✅ PDF 已導出: {}", pdfPath);
+            
+            // 導出文字
+            String txtPath = outputBase + ".txt";
+            textService.exportText(results, Paths.get(txtPath));
+            log.info("✅ TXT 已導出: {}", txtPath);
+            
+            // 移動已處理的圖片到 Save 文件夾
             Path savePath = Paths.get(config.getSaveFolder(), imagePath.getFileName().toString());
             Files.createDirectories(savePath.getParent());
             Files.move(imagePath, savePath, StandardCopyOption.REPLACE_EXISTING);
             
-            log.info("✅ 處理完成: {}", savePath.getFileName());
+            log.info("✅ 處理完成，圖片已移動到: {}", savePath);
             
         } catch (Exception e) {
-            log.error("處理圖片失敗: {}", e.getMessage(), e);
+            log.error("❌ 處理圖片失敗: {}", e.getMessage(), e);
+            
+            // 錯誤處理：移動到錯誤文件夾（可選）
+            try {
+                Path errorPath = Paths.get(config.getSaveFolder(), "errors", imagePath.getFileName().toString());
+                Files.createDirectories(errorPath.getParent());
+                Files.move(imagePath, errorPath, StandardCopyOption.REPLACE_EXISTING);
+                log.info("錯誤圖片已移動到: {}", errorPath);
+            } catch (Exception moveError) {
+                log.error("移動錯誤圖片失敗: {}", moveError.getMessage());
+            }
         }
     }
     
     /**
-     * 導出 OFD
+     * 導出 OFD（已廢棄，直接調用 ofdService）
      */
+    @Deprecated
     private void exportOfd(OcrResult result, String outputPath) throws Exception {
         // 這裡調用實際的 OFD 導出邏輯
         // 由於這是簡化版，實際需要調用 OfdLayoutDirectServiceImpl

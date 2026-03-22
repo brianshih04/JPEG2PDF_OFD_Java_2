@@ -60,8 +60,8 @@
                 <div class="flex items-center space-x-3">
                     <label class="text-sm font-medium text-gray-700">輸出格式：</label>
                     <select id="format" class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
-                        <option value="ofd" selected>Searchable OFD</option>
-                        <option value="searchable_pdf">Searchable PDF</option>
+                        <option value="searchable_pdf" selected>Searchable PDF</option>
+                        <option value="ofd">Searchable OFD</option>
                         <option value="text">純文字 (TXT)</option>
                     </select>
                 </div>
@@ -71,6 +71,20 @@
                         disabled>
                     上傳並開始 OCR
                 </button>
+            </div>
+            
+            <!-- OCR 進度顯示 -->
+            <div id="ocr-progress" class="mt-4 hidden">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="progress-text" class="text-sm font-medium text-blue-800">準備中...</span>
+                        <span id="progress-percent" class="text-sm font-bold text-blue-600">0%</span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-2.5">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="progress-detail" class="mt-2 text-xs text-gray-600"></div>
+                </div>
             </div>
         </div>
 
@@ -94,15 +108,15 @@
                 
                 <div class="ml-6">
                     <button id="watch-toggle-btn" 
-                            class="relative inline-flex h-14 w-28 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-gray-300"
+                            class="relative inline-flex h-10 w-20 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-gray-300"
                             th:classappend="${isWatching} ? 'bg-green-500' : 'bg-gray-300'"
                             th:attr="data-watching=${isWatching}">
                         <span id="watch-status" class="sr-only">啟用監控</span>
-                        <span id="watch-label" class="absolute left-1 right-1 text-sm font-bold text-white text-center"
+                        <span id="watch-label" class="absolute left-1 right-1 text-xs font-bold text-white text-center"
                               th:text="${isWatching} ? 'ON' : 'OFF'">OFF</span>
                         <span id="watch-toggle" 
-                              class="inline-block h-12 w-12 transform rounded-full bg-white shadow-lg transition-transform ring-2 ring-gray-200"
-                              th:style="${isWatching} ? 'transform: translateX(56px);' : 'transform: translateX(0);'"></span>
+                              class="inline-block h-8 w-8 transform rounded-full bg-white shadow-lg transition-transform ring-2 ring-gray-200"
+                              th:style="${isWatching} ? 'transform: translateX(40px);' : 'transform: translateX(0);'"></span>
                     </button>
                 </div>
             </div>
@@ -260,7 +274,7 @@
                 btn.classList.remove('bg-gray-300');
                 btn.classList.add('bg-green-500');
                 btn.setAttribute('data-watching', 'true');
-                toggle.style.transform = 'translateX(56px)';
+                toggle.style.transform = 'translateX(40px)';
                 label.textContent = 'ON';
                 icon.textContent = '✅';
                 statusText.textContent = '監控運行中 - 自動處理新上傳的圖片';
