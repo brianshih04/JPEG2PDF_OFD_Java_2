@@ -95,8 +95,8 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double fontSizeMm = ocrH * 0.75;
                         float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
                         
-                        // 4. AWT 测量 (改用 SANS_SERIF，其宽度更接近 OFD 渲染的英文)
-                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, 1)
+                        // 4. AWT 测量 (改用衬线体 SERIF，其宽度更接近底图的衬线字体)
+                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SERIF, java.awt.Font.PLAIN, 1)
                             .deriveFont(fontSizePt);
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
@@ -104,17 +104,22 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 终极 X 轴校准（Binary Search 黄金比例）
-                        // 最终校准：0.96 完美平衡！
+                        // 5. ⭐️ 终极 X 轴校准：保留 0.96 黄金比例，解除壓缩限制
+                        // 0.96 是经过 11 个版本 Binary Search 验证的完美平衡点
+                        // 对于包含很多 m、w 的句子，AWT 测量宽度非常大
+                        // 现在解除安全闸，让数学公式 100% 发挥作用
+                        // 那些原本超出右边界"超长句"，现在会被毫不留情地压回 OCR 框内
                         double estimatedOfdWidth = awtWidthMm * 0.96;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
                             // 恢复使用完整的 ocrW 作为目标撑开宽度
                             letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
-                            if (letterSpacing < -0.5) {
-                                letterSpacing = -0.5;
-                            }
+                            
+                            // 🚫 移除安全闸机制！
+                            // 之前：if (letterSpacing < -0.5) { letterSpacing = -0.5; }
+                            // 原因：会阻止那些"超强压缩"的句子收缩到正确的宽度
+                            // 现在解除限制，让原本超长的句子被毫不留情地压回 OCR 框内！
                         }
                         // =========================================================
                         
