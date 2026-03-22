@@ -78,37 +78,56 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                    .setHeight(heightMm);
                 vPage.add(img);
                 
-                // 添加不可见文字层
+                // 添加不可见文字层（终极方案：LetterSpacing 模拟 DeltaX）
                 int textCount = 0;
                 for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
                     try {
                         // 转换坐标：像素 -> mm
-                        double x = tp.getX() * 25.4 / 72.0;
+                        double ocrWidthMm = tp.getWidth() * 25.4 / 72.0;
+                        double ocrHeightMm = tp.getHeight() * 25.4 / 72.0;
+                        double x_mm = tp.getX() * 25.4 / 72.0;
+                        double y_mm = tp.getY() * 25.4 / 72.0;
                         double fontSizeMm = tp.getFontSize() * 25.4 / 72.0;
+                        String text = tp.getText();
                         
-                        // Y 轴转换（根据用户建议的 Baseline 修正）
-                        // OCR Y = 文字块顶部
-                        // Baseline = Y + fontSize * 0.85（经验值）
-                        double y = tp.getY() * 25.4 / 72.0 + fontSizeMm * 0.85;
+                        // 1. 计算 AWT 标准宽度
+                        java.awt.Font awtFont = new java.awt.Font("SimSun", java.awt.Font.PLAIN, 12)
+                            .deriveFont((float)(fontSizeMm * 72 / 25.4));
+                        java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
+                        double awtWidthMm = awtFont.getStringBounds(text, frc).getWidth() * 25.4 / 72;
                         
-                        // 创建文字片段（使用白色文字）
-                        Span span = new Span(tp.getText());
-                        span.setColor(255, 255, 255); // 纯白色
+                        // 2. 核心魔法：计算 LetterSpacing（模拟 DeltaX）
+                        double letterSpacing = 0;
+                        if (text.length() > 1 && ocrWidthMm > awtWidthMm) {
+                            letterSpacing = (ocrWidthMm - awtWidthMm) / (text.length() - 1);
+                        }
+                        
+                        // 3. 创建文字片段（先用红色测试）
+                        Span span = new Span(text);
                         span.setFontSize(fontSizeMm);
+                        span.setLetterSpacing(letterSpacing); // 解决 X 轴不对齐的关键
+                        span.setColor(255, 0, 0); // 红色（测试对齐）
                         
-                        // 创建段落
+                        // 4. 创建段落
                         Paragraph p = new Paragraph();
                         p.add(span);
+                        p.setPosition(Position.Absolute);
                         
-                        // 关键修复：1% 不透明度 + 白色文字
-                        // - WPS 会索引（因为不是 0% 透明）
-                        // - 肉眼几乎看不见（白色 + 1% 不透明度）
+                        // 5. 归零所有 Layout 引擎的干扰
+                        p.setMargin(0d);
+                        p.setPadding(0d);
+                        p.setLineSpace(0d);
+                        
+                        // 6. 给超大宽度，绝对不换行
+                        p.setWidth(ocrWidthMm + 100.0);
+                        
+                        // 7. Y 轴微调（向下推）
+                        double yOffset = ocrHeightMm * 0.15;
+                        p.setX(x_mm);
+                        p.setY(y_mm + yOffset);
+                        
+                        // 8. 1% 不透明度（WPS 兼容）
                         p.setOpacity(0.01);
-                        
-                        p.setPosition(Position.Absolute)
-                         .setX(x)
-                         .setY(y)
-                         .setWidth(tp.getWidth() * 25.4 / 72.0);
                         
                         // 添加到页面
                         vPage.add(p);
