@@ -73,70 +73,75 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">OCR 語言</label>
                     <select id="language" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        <optgroup label="中文">
-                            <option value="chinese_cht">繁體中文</option>
-                            <option value="ch">简体中文</option>
-                        </optgroup>
-                        <optgroup label="英語系">
-                            <option value="en" selected>English</option>
-                            <option value="german">Deutsch (德文)</option>
-                            <option value="dutch">Nederlands (荷蘭文)</option>
-                        </optgroup>
-                        <optgroup label="拉丁語系（羅曼語族）">
-                            <option value="french">Français (法文)</option>
-                            <option value="spanish">Español (西班牙文)</option>
-                            <option value="portuguese">Português (葡萄牙文)</option>
-                            <option value="italian">Italiano (意大利文)</option>
-                            <option value="romanian">Română (羅馬尼亞文)</option>
-                            <option value="oc">Occitan (奥克西坦文)</option>
-                        </optgroup>
-                        <optgroup label="斯拉夫語系">
-                            <option value="russian">Русский (俄文)</option>
-                            <option value="ukrainian">Українська (烏克蘭文)</option>
-                            <option value="belarusian">Беларуская (白俄羅斯文)</option>
-                            <option value="bulgarian">Български (保加利亞文)</option>
-                            <option value="serbian_cyrillic">Српски ћирилица (塞爾維亞西里爾)</option>
-                            <option value="serbian_latin">Srpski latinica (塞爾維亞拉丁)</option>
-                            <option value="croatian">Hrvatski (克羅地亞文)</option>
-                            <option value="bosnian">Bosanski (波斯尼亞文)</option>
-                            <option value="slovenian">Slovenščina (斯洛文尼亞文)</option>
-                            <option value="slovak">Slovenčina (斯洛伐克文)</option>
-                            <option value="czech">Čeština (捷克文)</option>
-                            <option value="polish">Polski (波蘭文)</option>
-                        </optgroup>
-                        <optgroup label="亞洲語言">
-                            <option value="japan">日本語</option>
-                            <option value="korean">한국어 (韩文)</option>
-                            <option value="hindi">हिन्दी (印地文)</option>
-                            <option value="vietnamese">Tiếng Việt (越南文)</option>
-                            <option value="thai">ไทย (泰文)</option>
-                            <option value="turkish">Türkçe (土耳其文)</option>
-                        </optgroup>
-                        <optgroup label="中東語言（閃含語系 + 印歐語系）⭐">
-                            <option value="arabic">العربية (阿拉伯文)</option>
-                            <option value="persian">فارسی (波斯文)</option>
-                            <option value="urdu">اردو (烏爾都文)</option>
-                            <option value="hebrew">עברית (希伯來文)</option>
-                        </optgroup>
-                        <optgroup label="其他語言">
-                            <option value="hungarian">Magyar (匈牙利文)</option>
-                            <option value="greek">Ελληνικά (希臘文)</option>
-                            <option value="albanian">Shqip (阿爾巴尼亞文)</option>
-                            <option value="lithuanian">Lietuvių (立陶宛文)</option>
-                            <option value="latvian">Latviešu (拉脫維亞文)</option>
-                            <option value="estonian">Eesti (愛沙尼亞文)</option>
-                        </optgroup>
+                        <option value="chinese_cht">繁體中文</option>
+                        <option value="ch">简体中文</option>
+                        <option value="en" selected>English</option>
+                        <option value="japan">日本語</option>
+                        <option value="korean">한국어 (韩文)</option>
+                        <option value="french">Français (法文)</option>
+                        <option value="german">Deutsch (德文)</option>
+                        <option value="spanish">Español (西班牙文)</option>
+                        <option value="italian">Italiano (意大利文)</option>
+                        <option value="portuguese">Português (葡萄牙文)</option>
+                        <option value="russian">Русский (俄文)</option>
+                        <option value="arabic">العربية (阿拉伯文)</option>
+                        <option value="persian">فارسی (波斯文)</option>
+                        <option value="urdu">اردو (烏爾都文)</option>
+                        <option value="hebrew">עברית (希伯來文)</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">支持 80+ 种语言（斯拉夫語系 + 拉丁語系），詳見 LANGUAGES.md</p>
+                    <p class="text-xs text-gray-500 mt-1">支持 80+ 种语言</p>
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">輸出格式</label>
                     <select id="format" class="w-full border border-gray-300 rounded-lg px-4 py-2">
                         <option value="searchable_pdf">Searchable PDF</option>
-                        <option value="searchable_ofd">Searchable OFD</option>
+                        <option value="ofd">Searchable OFD</option>
                         <option value="text">純文字 (TXT)</option>
                     </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watch Folder 控制 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <h2 class="text-xl font-semibold mb-2 text-gray-800">📂 Watch Folder 自動監控</h2>
+                    <p class="text-sm text-gray-600 mb-3">自動監控資料夾，檢測到新圖片時自動進行 OCR 處理</p>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">監控：</span>
+                            <code class="bg-gray-100 px-2 py-1 rounded text-gray-800">C:/OCR/Watch</code>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">輸出：</span>
+                            <code class="bg-gray-100 px-2 py-1 rounded text-gray-800">C:/OCR/Output</code>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ml-6">
+                    <button id="watch-toggle-btn" 
+                            class="relative inline-flex h-14 w-28 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-gray-300"
+                            th:classappend="${isWatching} ? 'bg-green-500' : 'bg-gray-300'"
+                            th:attr="data-watching=${isWatching}">
+                        <span id="watch-status" class="sr-only">啟用監控</span>
+                        <span id="watch-label" class="absolute left-1 right-1 text-sm font-bold text-white text-center"
+                              th:text="${isWatching} ? 'ON' : 'OFF'">OFF</span>
+                        <span id="watch-toggle" 
+                              class="inline-block h-12 w-12 transform rounded-full bg-white shadow-lg transition-transform ring-2 ring-gray-200"
+                              th:style="${isWatching} ? 'transform: translateX(56px);' : 'transform: translateX(0);'"></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="watch-info" class="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200"
+                 th:classappend="${isWatching} ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'">
+                <div class="flex items-center">
+                    <span id="watch-icon" class="text-2xl mr-2" th:text="${isWatching} ? '✅' : '⏸️'">⏸️</span>
+                    <span id="watch-status-text" class="text-sm font-medium"
+                          th:text="${isWatching} ? '監控運行中 - 自動處理新上傳的圖片' : '監控已暫停 - 點擊右側開關啟動'">監控已暫停 - 點擊右側開關啟動</span>
                 </div>
             </div>
         </div>
@@ -216,7 +221,7 @@
     <!-- 頁腳 -->
     <footer class="bg-gray-800 text-white py-4 mt-8">
         <div class="container mx-auto px-4 text-center">
-            <p class="text-sm">JPEG2PDF_OFD_Java v1.0.0 | 圖片 OCR 轉換工具</p>
+            <p class="text-sm">JPEG2PDF_OFD_Java v1.0.0 | 圖片 OCR 轉換工具 | 支持 80+ 種語言</p>
         </div>
     </footer>
 
@@ -238,14 +243,13 @@
 
     <script th:src="@{/js/app.js}"></script>
     
-    <script>
+    <script th:inline="javascript">
         // Watch Folder 功能
         let isWatching = /*[[${isWatching}]]*/ false;
         
         // 初始化 Watch Folder 狀態
         function initWatchFolder() {
             updateWatchUI(isWatching);
-            document.getElementById('watch-info').classList.remove('hidden');
         }
         
         // 切換監控狀態
@@ -285,7 +289,7 @@
                 btn.classList.remove('bg-gray-300');
                 btn.classList.add('bg-green-500');
                 btn.setAttribute('data-watching', 'true');
-                toggle.style.transform = 'translateX(48px)';
+                toggle.style.transform = 'translateX(56px)';
                 label.textContent = 'ON';
                 icon.textContent = '✅';
                 statusText.textContent = '監控運行中 - 自動處理新上傳的圖片';
@@ -298,7 +302,7 @@
                 toggle.style.transform = 'translateX(0)';
                 label.textContent = 'OFF';
                 icon.textContent = '⏸️';
-                statusText.textContent = '監控已暫停';
+                statusText.textContent = '監控已暫停 - 點擊右側開關啟動';
                 info.classList.remove('bg-green-50', 'border-green-200');
                 info.classList.add('bg-gray-50', 'border-gray-200');
             }
