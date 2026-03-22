@@ -105,15 +105,12 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
-                        // 这是经过精确计算的开根号曲线公式！
-                        // 它能完美符合我们测试出来的三个黄金点：
-                        // 长度 10 -> 系数 1.0 (大字不动)
-                        // 长度 30 -> 系数 1.11 (给予中字强大的初期压缩力，解决太宽问题)
-                        // 长度 75 -> 系数 1.20 (平滑过渡，完美还原小字长句的最佳压缩力)
+                        // ⭐️ 套用开根号曲线 (加大压缩系数，从 0.025 提升到 0.035)
                         double widthMultiplier = 1.0;
                         
                         if (text.length() > 10) {
-                            widthMultiplier = 1.0 + (0.025 * Math.sqrt(text.length() - 10));
+                            // 增加斜率，让中字和小字都能获得更强的向内收缩力！
+                            widthMultiplier = 1.0 + (0.035 * Math.sqrt(text.length() - 10));
                         }
                         
                         double estimatedOfdWidth = awtWidthMm * widthMultiplier;
