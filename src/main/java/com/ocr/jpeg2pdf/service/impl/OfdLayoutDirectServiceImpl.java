@@ -91,51 +91,49 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double ocrW = tp.getWidth() * 25.4 / 72.0;
                         double ocrH = tp.getHeight() * 25.4 / 72.0;
                         
-                        // 3. 设定字号 (保持 0.75 完美比例)
+                        // 3. 字号保持 0.75 完美比例
                         double fontSizeMm = ocrH * 0.75;
-                        float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
-                        
-                        // 4. AWT 测量（维持最稳定的 SANS_SERIF）
-                        // SANS_SERIF 的测量宽度最接近 OFDRW 实际渲染宽度
-                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, 1)
-                            .deriveFont(fontSizePt);
-                        java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
-                        
-                        double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
-                        double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 最终冲刺：提高系数到 1.05 + 放宽压缩极限
-                        // 告诉系统字体偏宽，需要向内收缩
-                        // Binary Search 最终优化：
-                        //   0.92 → 尾巴多出一點點（微寬）
-                        //   0.95 → 接近完美
-                        //   0.98 → 完美平衡
-                        //   1.0 → 最终版本
-                        //   1.05 → 最终冲刺！（增加压缩力道）
-                        double estimatedOfdWidth = awtWidthMm * 1.05;
+                        // 4. ⭐️ 拔除 AWT！使用纯手工「字符特征估算法」
+                        // 这 样算出来的宽度，永远稳定，换哪台电脑跑都不会变！
+                        double estimatedOfdWidth = 0;
+                        for (int charIndex = 0; charIndex < text.length(); charIndex++) {
+                            char c = text.charAt(charIndex);
+                            if ("ijl1tfrIJL:;.,|'!-() ".indexOf(c) != -1) {
+                                estimatedOfdWidth += fontSizeMm * 0.3; // 窄字符与空白
+                            } else if ("mwMW".indexOf(c) != -1) {
+                                estimatedOfdWidth += fontSizeMm * 0.85; // 宽字符
+                            } else if (Character.isUpperCase(c)) {
+                                estimatedOfdWidth += fontSizeMm * 0.65; // 大写字母
+                            } else if (c >= '\u4e00' && c <= '\u9fa5') {
+                                estimatedOfdWidth += fontSizeMm * 1.0; // 中文字
+                            } else {
+                                estimatedOfdWidth += fontSizeMm * 0.55; // 标准小写字母与数字
+                            }
+                        }
                         
+                        // 稍微打折 (0.95)，确保公式会给出一点点正数的 letterSpacing 来完美撑开
+                        estimatedOfdWidth = estimatedOfdWidth * 0.95;
+                        
+                        // =========================================================
+                        // 5. ⭐️ 计算 letterSpacing（使用启发式宽度）
                         double letterSpacing = 0;
                         if (text.length() > 1) {
                             letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
                             
-                            // 🛡 放寬向下壓縮的極限！
-                            // 原本的 -0.8 太嚴格，會導致長句子無法成功縮短
-                            // 放寬到 -2.0，讓公式能夠 100% 把超出去的尾巴拉回來
-                            if (letterSpacing < -2.0) {
-                                letterSpacing = -2.0;
+                            // 給予極度寬鬆的防呆限制，允許正常壓縮與拉伸
+                            if (letterSpacing < -1.5) {
+                                letterSpacing = -1.5;
                             }
-                            if (letterSpacing > 1.5) {
-                                letterSpacing = 1.5;
+                            if (letterSpacing > 2.0) {
+                                letterSpacing = 2.0;
                             }
                         }
                         // =========================================================
                         
-                        // 6. Y 轴保留完美公式
-                        double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
-                        double ascentMm = ascentPt * 25.4 / 72.0;
-                        double ocrBaselineY = ocrY + (ocrH * 0.76);
-                        double paragraphY = ocrBaselineY - ascentMm;
+                        // 6. Y 轴也拔除 AWT，使用稳定的 0.8 比例来模拟 Ascent
+                        double paragraphY = (ocrY + (ocrH * 0.76)) - (fontSizeMm * 0.8);
                         
                         // 3. 创建文字片段（先用红色测试对齐）
                         Span span = new Span(text);
