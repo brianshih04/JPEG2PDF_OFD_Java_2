@@ -87,8 +87,11 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double ocrHeightMm = tp.getHeight() * 25.4 / 72.0;
                         double x_mm = tp.getX() * 25.4 / 72.0;
                         double y_mm = tp.getY() * 25.4 / 72.0;
-                        double fontSizeMm = tp.getFontSize() * 25.4 / 72.0;
                         String text = tp.getText();
+                        
+                        // ⭐️ 核心修正 1：字号缩小
+                        // OCR 的框高包含了行距与留白，真实字号通常只有框高的 70%-80%
+                        double fontSizeMm = ocrHeightMm * 0.75; // 从 1.0 改为 0.75
                         
                         // 1. 计算 AWT 标准宽度
                         java.awt.Font awtFont = new java.awt.Font("SimSun", java.awt.Font.PLAIN, 12)
@@ -121,8 +124,9 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 6. 给超大宽度，绝对不换行
                         p.setWidth(ocrWidthMm + 100.0);
                         
-                        // 7. Y 轴微调（向下推 - 根据 Y 轴偏高问题调整）
-                        double yOffset = ocrHeightMm * 0.8; // 从 0.15 增加到 0.8
+                        // 7. ⭐️ 核心修正 2：Y 轴基准线向下推
+                        // 字号缩小后，Top 座标不再是左上角，需要将 Baseline 往下推
+                        double yOffset = ocrHeightMm * 0.8;
                         p.setX(x_mm);
                         p.setY(y_mm + yOffset);
                         
