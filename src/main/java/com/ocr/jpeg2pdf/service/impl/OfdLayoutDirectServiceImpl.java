@@ -109,8 +109,9 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 0.92 折扣 → 尾巴稍长
                         // 0.96 折扣 → 尾巴稍长
                         // 0.98 折扣 → 接近完美
-                        // 1.0 折扣 → 完美！
-                        double estimatedOfdWidth = awtWidthMm * 1.0;
+                        // 1.0 折扣 → 仍然不够
+                        // 1.1 折扣 → 完美！
+                        double estimatedOfdWidth = awtWidthMm * 1.1;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
