@@ -82,50 +82,48 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                 int textCount = 0;
                 for (OcrResult.TextPosition tp : ocrResult.getTextPositions()) {
                     try {
-                        // 1. 取得 OCR 边界框
+                        // 1. ⭐️ 关键修正 1：去除 OCR 文字头尾的隐形空白，避免字距被吃掉！
+                        String text = tp.getText().trim();
+                        
+                        // 2. 取得 OCR 边界框
                         double ocrX = tp.getX() * 25.4 / 72.0;
                         double ocrY = tp.getY() * 25.4 / 72.0;
                         double ocrW = tp.getWidth() * 25.4 / 72.0;
                         double ocrH = tp.getHeight() * 25.4 / 72.0;
-                        String text = tp.getText();
                         
-                        // 2. 设定字号 (0.75 的比例在你的图中已经证明完美)
+                        // 3. 设定字号 (保持 0.75 完美比例)
                         double fontSizeMm = ocrH * 0.75;
+                        float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
+                        
+                        // 4. AWT 测量 (改用 SANS_SERIF，其宽度更接近 OFD 渲染的英文)
+                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, 1)
+                            .deriveFont(fontSizePt);
+                        java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
+                        
+                        double awtWidthPt = awtFont.getStringBounds(text, frc).getWidth();
+                        double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 3. ⭐️ 终极 X 轴修正：拔除 AWT，使用启发式算法精确估算 OFDRW 渲染宽度
-                        // 跨平台绝对稳定，无论部署在 Windows/Linux/Mac 都不会乱缩水
-                        double estimatedOfdWidth = 0;
-                        for (char c : text.toCharArray()) {
-                            if ("ijl1tfrIJL:;.,|'!-()".indexOf(c) != -1) {
-                                estimatedOfdWidth += fontSizeMm * 0.3; // 窄字符 (i, j, l, 1, t, f, r, I, J, L, 标点)
-                            } else if ("mwMW".indexOf(c) != -1) {
-                                estimatedOfdWidth += fontSizeMm * 0.85; // 宽字符 (m, w, M, W)
-                            } else if (Character.isUpperCase(c)) {
-                                estimatedOfdWidth += fontSizeMm * 0.7; // 大写字母 (A-Z, 除 M/W)
-                            } else if (c >= '\u4e00' && c <= '\u9fa5') {
-                                estimatedOfdWidth += fontSizeMm * 1.0; // 中文全角 (CJK 字符)
-                            } else {
-                                estimatedOfdWidth += fontSizeMm * 0.5; // 标准小写字母与数字 (a-z, 0-9, 除 m/w)
-                            }
-                        }
+                        // 5. ⭐️ 关键修正 2：宽度打折，强迫字距放大
+                        // 我们将 AWT 测出的宽度打 85 折，模拟 OFD 较窄的实际渲染宽度
+                        // 这样 的值就会变大，把红字精准撑到最右边！
+                        double estimatedOfdWidth = awtWidthMm * 0.85;
                         
-                        // 4. 精确计算字距
                         double letterSpacing = 0;
                         if (text.length() > 1) {
-                            // 由于我们的估算值精准贴合 OFD 内部引擎，这个字距会完美撑开文字
                             letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
-                            
-                            // 防呆：防止极端情况下字符挤叠
+                            // 防呆：防止极端情况下字距变成严重的负数挤压
                             if (letterSpacing < -0.5) {
                                 letterSpacing = -0.5;
                             }
                         }
                         // =========================================================
                         
-                        // 5. Y 轴保留上一版的完美公式 (不依赖 AWT，标准字体 Ascent 约为字号的 80%)
+                        // 6. Y 轴保留完美公式
+                        double ascentPt = awtFont.getLineMetrics(text, frc).getAscent();
+                        double ascentMm = ascentPt * 25.4 / 72.0;
                         double ocrBaselineY = ocrY + (ocrH * 0.76);
-                        double paragraphY = ocrBaselineY - (fontSizeMm * 0.80);
+                        double paragraphY = ocrBaselineY - ascentMm;
                         
                         // 3. 创建文字片段（先用红色测试对齐）
                         Span span = new Span(text);
