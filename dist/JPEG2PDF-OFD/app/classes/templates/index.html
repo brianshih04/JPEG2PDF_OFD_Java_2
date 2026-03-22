@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPEG2PDF_OFD_Java</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <!-- 導航欄 -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <a th:href="@{/}" class="text-xl font-bold flex items-center">
+                    <span class="text-2xl mr-2">🐉</span>
+                    JPEG2PDF_OFD_Java
+                </a>
+                <div class="flex space-x-4">
+                    <a th:href="@{/}" class="hover:bg-blue-700 px-3 py-2 rounded">首頁</a>
+                    <a th:href="@{/settings}" class="hover:bg-blue-700 px-3 py-2 rounded">設定</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主內容區 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 標題區 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🐉 JPEG2PDF_OFD_Java</h1>
+            <p class="text-gray-600">圖片 OCR 轉換工具 - 支援 Searchable PDF / OFD / TEXT</p>
+        </div>
+
+        <!-- 上傳區域 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">📁 上傳圖片</h2>
+            
+            <div id="drop-zone" 
+                 class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-blue-500 transition-colors">
+                <div class="text-gray-500">
+                    <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="text-lg mb-2">拖放圖片到這裡</p>
+                    <p class="text-sm">或點擊選擇檔案</p>
+                    <p class="text-xs text-gray-400 mt-2">支援 JPEG, JPG, PNG, TIFF, BMP</p>
+                </div>
+                <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+            </div>
+            
+            <div id="file-list" class="mt-4 hidden">
+                <h3 class="font-medium text-gray-700 mb-2">已選擇的檔案：</h3>
+                <ul id="files" class="space-y-2"></ul>
+            </div>
+            
+            <div class="mt-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <label class="text-sm font-medium text-gray-700">輸出格式：</label>
+                    <select id="format" class="border border-gray-300 rounded-lg px-4 py-2 text-sm">
+                        <option value="searchable_pdf" selected>Searchable PDF</option>
+                        <option value="ofd">Searchable OFD</option>
+                        <option value="text">純文字 (TXT)</option>
+                    </select>
+                </div>
+                
+                <button id="upload-btn" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                        disabled>
+                    上傳並開始 OCR
+                </button>
+            </div>
+            
+            <!-- OCR 進度顯示 -->
+            <div id="ocr-progress" class="mt-4 hidden">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span id="progress-text" class="text-sm font-medium text-blue-800">準備中...</span>
+                        <span id="progress-percent" class="text-sm font-bold text-blue-600">0%</span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-2.5">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="progress-detail" class="mt-2 text-xs text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watch Folder 控制 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <h2 class="text-xl font-semibold mb-2 text-gray-800">📂 Watch Folder 自動監控</h2>
+                    <p class="text-sm text-gray-600 mb-3">自動監控資料夾，檢測到新圖片時自動進行 OCR 處理</p>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">監控：</span>
+                            <code class="bg-gray-100 px-2 py-1 rounded text-gray-800">C:/OCR/Watch</code>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">輸出：</span>
+                            <code class="bg-gray-100 px-2 py-1 rounded text-gray-800">C:/OCR/Output</code>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ml-6">
+                    <button id="watch-toggle-btn" 
+                            class="relative inline-flex h-10 w-20 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-gray-300"
+                            th:classappend="${isWatching} ? 'bg-green-500' : 'bg-gray-300'"
+                            th:attr="data-watching=${isWatching}">
+                        <span id="watch-status" class="sr-only">啟用監控</span>
+                        <span id="watch-label" class="absolute left-1 right-1 text-xs font-bold text-white text-center"
+                              th:text="${isWatching} ? 'ON' : 'OFF'">OFF</span>
+                        <span id="watch-toggle" 
+                              class="inline-block h-8 w-8 transform rounded-full bg-white shadow-lg transition-transform ring-2 ring-gray-200"
+                              th:style="${isWatching} ? 'transform: translateX(40px);' : 'transform: translateX(0);'"></span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="watch-info" class="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200"
+                 th:classappend="${isWatching} ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'">
+                <div class="flex items-center">
+                    <span id="watch-icon" class="text-2xl mr-2" th:text="${isWatching} ? '✅' : '⏸️'">⏸️</span>
+                    <span id="watch-status-text" class="text-sm font-medium"
+                          th:text="${isWatching} ? '監控運行中 - 自動處理新上傳的圖片' : '監控已暫停 - 點擊右側開關啟動'">監控已暫停 - 點擊右側開關啟動</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果區域 -->
+        <div id="result-section" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">📝 OCR 辨識結果</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-600">辨識行數</p>
+                        <p id="line-count" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-600">信心度</p>
+                        <p id="confidence" class="text-2xl font-bold text-green-600">0%</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-600">處理時間</p>
+                        <p id="process-time" class="text-2xl font-bold text-purple-600">0s</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">辨識文字</label>
+                    <textarea id="ocr-text" rows="10" 
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono text-sm"
+                              readonly></textarea>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-medium text-gray-800">匯出檔案</h3>
+                        <p id="output-file" class="text-sm text-gray-500"></p>
+                    </div>
+                    <div class="space-x-2">
+                        <button id="download-btn" 
+                                class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                            ⬇️ 下載檔案
+                        </button>
+                        <button id="new-task-btn" 
+                                class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">
+                            🔄 新任務
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能說明 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">📖 使用說明</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-4xl mb-2">📤</div>
+                    <h3 class="font-medium text-gray-800 mb-1">上傳圖片</h3>
+                    <p class="text-sm text-gray-600">拖放或點擊上傳圖片檔案</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🔍</div>
+                    <h3 class="font-medium text-gray-800 mb-1">OCR 辨識</h3>
+                    <p class="text-sm text-gray-600">自動辨識圖片中的文字</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">📄</div>
+                    <h3 class="font-medium text-gray-800 mb-1">匯出檔案</h3>
+                    <p class="text-sm text-gray-600">匯出為 PDF / OFD / TEXT</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 頁腳 -->
+    <footer class="bg-gray-800 text-white py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">JPEG2PDF_OFD_Java v1.0.0 | 圖片 OCR 轉換工具 | 支持 80+ 種語言</p>
+        </div>
+    </footer>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+        <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
+            <span id="toast-message"></span>
+            <button onclick="hideToast()" class="ml-4 text-white hover:text-gray-200">✕</button>
+        </div>
+    </div>
+
+    <!-- 載入中 -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+            <p id="loading-message" class="text-gray-700">處理中...</p>
+        </div>
+    </div>
+
+    <script th:src="@{/js/app.js}"></script>
+    
+    <script th:inline="javascript">
+        // Watch Folder 功能
+        let isWatching = /*[[${isWatching}]]*/ false;
+        
+        // 初始化 Watch Folder 狀態
+        function initWatchFolder() {
+            updateWatchUI(isWatching);
+        }
+        
+        // 切換監控狀態
+        async function toggleWatchFolder() {
+            try {
+                const response = await fetch('/api/watch/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    isWatching = result.isWatching;
+                    updateWatchUI(isWatching);
+                    showToast(result.message);
+                } else {
+                    showToast('操作失敗: ' + (result.error || '未知錯誤'));
+                }
+            } catch (error) {
+                showToast('操作失敗: ' + error.message);
+            }
+        }
+        
+        // 更新 UI 狀態
+        function updateWatchUI(watching) {
+            const btn = document.getElementById('watch-toggle-btn');
+            const toggle = document.getElementById('watch-toggle');
+            const label = document.getElementById('watch-label');
+            const icon = document.getElementById('watch-icon');
+            const statusText = document.getElementById('watch-status-text');
+            const info = document.getElementById('watch-info');
+            
+            if (watching) {
+                btn.classList.remove('bg-gray-300');
+                btn.classList.add('bg-green-500');
+                btn.setAttribute('data-watching', 'true');
+                toggle.style.transform = 'translateX(40px)';
+                label.textContent = 'ON';
+                icon.textContent = '✅';
+                statusText.textContent = '監控運行中 - 自動處理新上傳的圖片';
+                info.classList.remove('bg-gray-50', 'border-gray-200');
+                info.classList.add('bg-green-50', 'border-green-200');
+            } else {
+                btn.classList.remove('bg-green-500');
+                btn.classList.add('bg-gray-300');
+                btn.setAttribute('data-watching', 'false');
+                toggle.style.transform = 'translateX(0)';
+                label.textContent = 'OFF';
+                icon.textContent = '⏸️';
+                statusText.textContent = '監控已暫停 - 點擊右側開關啟動';
+                info.classList.remove('bg-green-50', 'border-green-200');
+                info.classList.add('bg-gray-50', 'border-gray-200');
+            }
+        }
+        
+        // 綁定按鈕事件
+        document.getElementById('watch-toggle-btn').addEventListener('click', toggleWatchFolder);
+        
+        // 頁面加載時初始化
+        document.addEventListener('DOMContentLoaded', initWatchFolder);
+    </script>
+</body>
+</html>
