@@ -110,9 +110,9 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         
                         // 当字数超过 10 个字，开始启动累积压缩机制
                         if (text.length() > 10) {
-                            // ⚠️ 调整压缩力度：0.005 → 0.002
-                            // 平衡压缩力度，避免过度压缩
-                            widthMultiplier = 1.0 + ((text.length() - 10) * 0.002);
+                            // ⚠️ 调整压缩力度：0.002 → 0.003
+                            // 精确平衡压缩力度
+                            widthMultiplier = 1.0 + ((text.length() - 10) * 0.003);
                         }
                         
                         double estimatedOfdWidth = awtWidthMm * widthMultiplier;
