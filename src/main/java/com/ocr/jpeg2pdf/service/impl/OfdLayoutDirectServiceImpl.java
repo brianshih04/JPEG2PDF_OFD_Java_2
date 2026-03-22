@@ -104,18 +104,15 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 关键修正 2：宽度打折，强迫字距放大
-                        // 我们将 AWT 测出的宽度打 85 折，模拟 OFD 较窄的实际渲染宽度
-                        // 这样 的值就会变大，把红字精准撑到最右边！
-                        double estimatedOfdWidth = awtWidthMm * 0.85;
+                        // 5. ⭐️ 关键修正：不再压缩字体宽度，而是「微缩 OCR 目标宽度」
+                        // PaddleOCR 的外框通常比实际黑字多出约 3%-5% 的空白边距
+                        // 我们相信 AWT 的真实测量宽度，微缩 OCR 框来匹配
+                        double targetW = ocrW * 0.96; // 砍掉 OCR 框的空白边距
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
-                            letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
-                            // 防呆：防止极端情况下字距变成严重的负数挤压
-                            if (letterSpacing < -0.5) {
-                                letterSpacing = -0.5;
-                            }
+                            // 使用微缩后的 OCR 宽度减去 AWT 真实宽度
+                            letterSpacing = (targetW - awtWidthMm) / (text.length() - 1);
                         }
                         // =========================================================
                         
@@ -145,7 +142,8 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         p.setWidth(ocrW + 100.0);
                         
                         // 7. 设置 X、Y 座标
-                        p.setX(ocrX);
+                        // X 轴向右推移一点点，补偿刚刚砍掉的左侧空白边距（居中对齐真实字迹）
+                        p.setX(ocrX + (ocrW * 0.02));
                         p.setY(paragraphY);
                         
                         // 8. 先用完全不透明测试对齐
