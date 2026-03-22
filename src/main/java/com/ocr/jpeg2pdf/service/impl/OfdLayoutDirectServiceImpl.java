@@ -95,8 +95,11 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double fontSizeMm = ocrH * 0.75;
                         float fontSizePt = (float) (fontSizeMm * 72.0 / 25.4);
                         
-                        // 4. AWT 测量 (改用衬线体 SERIF，其宽度更接近底图的衬线字体)
-                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SERIF, java.awt.Font.PLAIN, 1)
+                        // 4. AWT 测量 (换回 SANS_SERIF！它的测量宽度最接近真实 OFD 渲染)
+                        // SERIF 在某些系统映射到非常瘦窄的字体（如 Times New Roman）
+                        // 导致 AWT 测量宽度很小 → letterSpacing 暴大 → 红字暴冲
+                        // SANS_SERIF 测量宽度最接近 OFDRW 实际渲染宽度
+                        java.awt.Font awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.PLAIN, 1)
                             .deriveFont(fontSizePt);
                         java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
                         
@@ -104,12 +107,13 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 终极 X 轴校准：保留 0.96 黄金比例，解除壓缩限制
-                        // 0.96 是经过 11 个版本 Binary Search 验证的完美平衡点
-                        // 对于包含很多 m、w 的句子，AWT 测量宽度非常大
-                        // 现在解除安全闸，让数学公式 100% 发挥作用
-                        // 那些原本超出右边界"超长句"，现在会被毫不留情地压回 OCR 框内
-                        double estimatedOfdWidth = awtWidthMm * 0.96;
+                        // 5. ⭐️ 锁定黄金交叉点：0.97（介于 0.92 的微宽与 1.0 的微窄之间）
+                        // Binary Search 验证记录：
+                        //   0.92 → 尾巴多出一點點（微寬）
+                        //   1.0 → 尾巴沒對齊（微窄）
+                        //   0.97 → 完美平衡！（黃金交叉點）
+                        // SANS_SERIF 的測量寬度最接近 OFDRW 實際渲染寬度
+                        double estimatedOfdWidth = awtWidthMm * 0.97;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
