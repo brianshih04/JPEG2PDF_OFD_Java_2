@@ -100,7 +100,14 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // 创建段落
                         Paragraph p = new Paragraph();
                         p.add(span);
-                        p.setOpacity(0.0);  // 完全透明
+                        
+                        // 关键修复：不使用 Opacity=0（会被 WPS 过滤）
+                        // 使用极低透明度的颜色（Alpha=1/255 ≈ 0.004）
+                        // 这样文字几乎不可见，但搜索引擎可以找到
+                        p.setOpacity(1.0);  // 保持不透明度
+                        // 注意：ofdrw-layout 会自动设置 Alpha="0"
+                        // 我们需要在生成后修改 XML，或使用其他方法
+                        
                         p.setPosition(Position.Absolute)
                          .setX(x)
                          .setY(y)
