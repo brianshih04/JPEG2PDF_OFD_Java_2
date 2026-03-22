@@ -141,7 +141,7 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                             
                             Span span = new Span(singleChar);
                             span.setFontSize(fontSizeMm);
-                            span.setColor(255, 0, 0); // 测试红色
+                            span.setColor(255, 255, 255); // 白色（最终版本）
                             
                             Paragraph p = new Paragraph();
                             p.add(span);
@@ -154,6 +154,9 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                             // ⭐ 强制指定这个字的 X 与 Y
                             p.setX(currentX);
                             p.setY(paragraphY);
+                            
+                            // ⭐ 1% 透明度（WPS 兼容）
+                            p.setOpacity(0.01);
                             
                             vPage.add(p);
                             
