@@ -104,15 +104,19 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         double awtWidthMm = awtWidthPt * 25.4 / 72.0;
                         
                         // =========================================================
-                        // 5. ⭐️ 关键修正：不再压缩字体宽度，而是「微缩 OCR 目标宽度」
-                        // PaddleOCR 的外框通常比实际黑字多出约 3%-5% 的空白边距
-                        // 我们相信 AWT 的真实测量宽度，微缩 OCR 框来匹配
-                        double targetW = ocrW * 0.96; // 砍掉 OCR 框的空白边距
+                        // 5. ⭐️ 终极 X 轴校准（Binary Search 黄金比例）
+                        // 0.85 折扣 → 太宽（超车）
+                        // 1.0 折扣 → 太窄（缩水）
+                        // 0.92 折扣 → 完美平衡！
+                        double estimatedOfdWidth = awtWidthMm * 0.92;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
-                            // 使用微缩后的 OCR 宽度减去 AWT 真实宽度
-                            letterSpacing = (targetW - awtWidthMm) / (text.length() - 1);
+                            // 恢复使用完整的 ocrW 作为目标撑开宽度
+                            letterSpacing = (ocrW - estimatedOfdWidth) / (text.length() - 1);
+                            if (letterSpacing < -0.5) {
+                                letterSpacing = -0.5;
+                            }
                         }
                         // =========================================================
                         
@@ -142,8 +146,8 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         p.setWidth(ocrW + 100.0);
                         
                         // 7. 设置 X、Y 座标
-                        // X 轴向右推移一点点，补偿刚刚砍掉的左侧空白边距（居中对齐真实字迹）
-                        p.setX(ocrX + (ocrW * 0.02));
+                        // ⭐️ 拔除偏移干扰，还原最准确的 X 起点（左边界已完美，不要破坏）
+                        p.setX(ocrX);
                         p.setY(paragraphY);
                         
                         // 8. 先用完全不透明测试对齐
