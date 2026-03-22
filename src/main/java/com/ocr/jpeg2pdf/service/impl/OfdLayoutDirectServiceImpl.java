@@ -106,9 +106,9 @@ public class OfdLayoutDirectServiceImpl implements OfdService {
                         // =========================================================
                         // 5. ⭐️ 终极 X 轴校准（Binary Search 黄金比例）
                         // 0.85 折扣 → 太宽（超车）
-                        // 1.0 折扣 → 太窄（缩水）
-                        // 0.92 折扣 → 完美平衡！
-                        double estimatedOfdWidth = awtWidthMm * 0.92;
+                        // 0.92 折扣 → 尾巴稍长
+                        // 0.96 折扣 → 完美！（预估宽度变大，letterSpacing 变小，尾巴缩回）
+                        double estimatedOfdWidth = awtWidthMm * 0.96;
                         
                         double letterSpacing = 0;
                         if (text.length() > 1) {
