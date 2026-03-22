@@ -214,7 +214,25 @@ public class OcrController {
                 DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             );
             String extension = getExtension(format);
-            String filename = "output_" + timestamp + extension;
+            
+            // 從第一個圖片獲取原檔案名（不含副檔名）
+            String originalFilename = "output";
+            if (!imageIds.isEmpty()) {
+                ImageInfo firstImageInfo = imageStore.get(imageIds.get(0));
+                if (firstImageInfo != null && firstImageInfo.getOriginalFilename() != null) {
+                    String originalName = firstImageInfo.getOriginalFilename();
+                    // 移除副檔名
+                    int dotIndex = originalName.lastIndexOf('.');
+                    if (dotIndex > 0) {
+                        originalFilename = originalName.substring(0, dotIndex);
+                    } else {
+                        originalFilename = originalName;
+                    }
+                }
+            }
+            
+            // 格式：原檔案名_時間戳.副檔名
+            String filename = originalFilename + "_" + timestamp + extension;
             
             // 確保輸出目錄存在
             Path outputDir = Paths.get(appConfig.getOutputFolder());
